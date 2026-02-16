@@ -109,6 +109,20 @@ public class SimpleKeyProviderTranslator {
 
   private Set<DetailLevel> detailLevel = new HashSet<>();
 
+  //Map storing available translations for sorts
+  SortTranslator sortTranslator = new SortTranslator(new HashMap<>());
+
+  //Map storing availabel translations for func symbols
+  FuncTranslator funcTranslator = new FuncTranslator(new HashMap<>());
+
+  //This map stores the abstract class definitions generated from the abstractions 
+  Map<String, ClassOrInterfaceDeclaration> abstractAbstractions = new HashMap<>();
+
+  //This map stores the class implementation blueprints generated from the abstractions 
+  Map<String, ClassOrInterfaceDeclaration> abstractionImpementations = new HashMap<>();
+
+  List<TranslationResult> results = new ArrayList<>();
+
   public SimpleKeyProviderTranslator(
       ChameleonMessageManager manager) {
 
@@ -142,188 +156,7 @@ public class SimpleKeyProviderTranslator {
     funcLoader.forEach(f -> funcTranslator.store(f.getAll()));
   }
 
-  record SimpleResult(
-      String packageName,
-      String className,
-      CompilationUnit cu) implements TranslationResult {
-    @Override
-    public Optional<String> extendSubDirectory() {
-      return Optional.ofNullable(packageName);
-    }
-
-    public String fileName() {
-      return className;
-    }
-
-    public String fileEnding() {
-      return ".java";
-    }
-
-    public void writeTo(Writer writer) throws IOException {
-      PrinterConfiguration config = new DefaultPrinterConfiguration();
-      DefaultPrettyPrinter printer = new DefaultPrettyPrinter(config);
-      writer.write(printer.print(cu));
-    }
-  }
-
-  private record SortTranslator(
-      Map<String, TypeTranslation> map) implements TypeTranslation.TypeTranslator {
-    public void store(TypeTranslation trans) {
-      //TODO: Do error check if translation is ambigous
-      this.map().put(trans.getClibSort().getName(), trans);
-    }
-
-    public TypeTranslation translate(Sort sort) {
-      TypeTranslation translation = this.map().get(sort.getName());
-      if (translation == null) {
-        //TODO: Report proper error
-        System.err.println(String.format("ERROR: The type '%s' could not be translated.", sort));
-        return null;
-      }
-      return translation;
-    }
-  }
-
-  private record FuncTranslator(
-      Map<String, FuncTranslation> map) implements FuncTranslation.FuncTranslator {
-
-    public void store(List<FuncTranslation> translations) {
-      //TODO: Error check if ambigous
-      for (FuncTranslation trans : translations) {
-        this.map().put(trans.getClibIdentifier().identifier().identifier(), trans);
-      }
-    }
-
-    public FuncTranslation translate(Term.Identifier.IdentifierValue identifier) {
-      FuncTranslation t = this.map().get(identifier.identifier().identifier());
-      if (t == null) {
-        System.err.println(String.format("ERROR: Translations for the identifier '%s' not found.", identifier));
-        return null;
-      }
-      return t;
-    }
-  }
-
-  //TODO: This is just a most simple implementation, might be reworked, but serves it purpose for now
-  private final class VariableScopeManager implements VariableScope.VariableTranslator {
-
-    Map<String, VariableScope> map = new HashMap<>();
-    Optional<Type> returnType = Optional.empty();
-    Optional<Type> ownerType = Optional.empty();
-    List<Parameter> parameters = new ArrayList<>();
-
-    public void add(SortedVar sortedVar) {
-      TypeTranslation t = sortTranslator.translate(sortedVar.sort());
-      VariableScopeElement el = new VariableScopeElement(
-          sortedVar.symbol(),
-          new NameExpr(sortedVar.symbol().identifier()),
-          sortedVar.sort(),
-          t.getJmlType(sortedVar.sort()),
-          t.hasFootprint());
-      map.put(el.getClibSymbol().identifier(), el);
-    }
-
-    public void remove(SortedVar sortedVar) {
-      map.remove(sortedVar.symbol().identifier());
-    }
-
-    public void add(Formal formal) {
-      TypeTranslation t = sortTranslator.translate(formal.sort());
-      Symbol s = new Symbol(formal.identifier().identifier());
-      //TODO: find better way for result
-      if (formal.identifier().identifier().equals("result")) {
-        VariableScopeElement el = new VariableScopeElement(
-            s,
-            new NameExpr(RESULT_LABEL),
-            formal.sort(),
-            t.getJmlType(formal.sort()),
-            t.hasFootprint());
-        this.returnType = Optional.ofNullable(t.getJmlType(formal.sort()));
-        map.put(el.getClibSymbol().identifier(), el);
-      } else if (formal.identifier().identifier().equals("this")) {
-        this.ownerType = Optional.ofNullable(t.getJmlType(formal.sort()));
-        VariableScopeElement el = new VariableScopeElement(
-            s,
-            new ThisExpr(),
-            formal.sort(),
-            t.getJmlType(formal.sort()),
-            t.hasFootprint());
-        map.put(el.getClibSymbol().identifier(), el);
-      } else {
-        VariableScopeElement el = new VariableScopeElement(
-            s,
-            new NameExpr(formal.identifier().identifier()),
-            formal.sort(),
-            t.getJmlType(formal.sort()),
-            t.hasFootprint());
-        map.put(el.getClibSymbol().identifier(), el);
-        parameters.add(new Parameter(
-            t.getJmlType(formal.sort()),
-            new SimpleName(formal.identifier().identifier())));
-      }
-    }
-
-    public Optional<VariableScope> translate(Symbol symbol) {
-      return Optional.ofNullable(map.get(symbol.identifier()));
-    }
-  }
-
-  private record VariableScopeElement(
-      Symbol symbol,
-      Expression expression,
-      Sort clibResultType,
-      Type jmlResultType,
-      boolean hasFootprint) implements VariableScope {
-    public Symbol getClibSymbol() {
-      return symbol;
-    }
-
-    public Expression getJmlTerm() {
-      return expression;
-    }
-
-    public Sort getClibResultType() {
-      return clibResultType;
-    }
-
-    public Type getJmlResultType() {
-      return jmlResultType;
-    }
-
-    public boolean hasFootprint() {
-      return hasFootprint;
-    }
-  }
-
-  private final class IndexFab implements TypeTranslation.IndexFabric {
-    private char i = 'a';
-
-    public SimpleName getNextIndex() {
-      char res = i;
-      i++;
-      if (i > 'z') {
-        //TODO: report Error
-        i = 'a';
-      }
-      return new SimpleName(String.valueOf(res));
-    }
-  }
-
-  //Map storing available translations for sorts
-  SortTranslator sortTranslator = new SortTranslator(new HashMap<>());
-
-  //Map storing availabel translations for func symbols
-  FuncTranslator funcTranslator = new FuncTranslator(new HashMap<>());
-
-  //This map stores the abstract class definitions generated from the abstractions 
-  Map<String, ClassOrInterfaceDeclaration> abstractAbstractions = new HashMap<>();
-
-  //This map stores the class implementation blueprints generated from the abstractions 
-  Map<String, ClassOrInterfaceDeclaration> abstractionImpementations = new HashMap<>();
-
-  List<TranslationResult> results = new ArrayList<>();
-
-  List<TranslationResult> translateContractLibAstApplicant(ContractLibAst ast) {
+  public List<TranslationResult> translateContractLibAstApplicant(ContractLibAst ast) {
 
     results.add(keyTranslator.translate(ast));
     keyTranslator.getSorts().stream()
@@ -347,7 +180,7 @@ public class SimpleKeyProviderTranslator {
     return results;
   }
 
-  List<TranslationResult> translateContractLibAstProvider(ContractLibAst ast) {
+  public List<TranslationResult> translateContractLibAstProvider(ContractLibAst ast) {
 
     results.add(keyTranslator.translate(ast));
     keyTranslator.getSorts().stream()
@@ -398,7 +231,7 @@ public class SimpleKeyProviderTranslator {
         .forEach(s -> addGhostField(dec, s));
   }
 
-  private void addGhostField(ClassOrInterfaceDeclaration dec, SelectorDec selector) {
+  void addGhostField(ClassOrInterfaceDeclaration dec, SelectorDec selector) {
 
     TypeTranslation translation = sortTranslator.translate(selector.sort());
 
@@ -465,7 +298,7 @@ public class SimpleKeyProviderTranslator {
     //.addModifier(Modifier.DefaultKeyword.JML_INSTANCE)));
   }
 
-  private void addAbstractionFootprint(ClassOrInterfaceDeclaration dec) {
+  protected void addAbstractionFootprint(ClassOrInterfaceDeclaration dec) {
 
     FieldDeclaration fieldDec = new FieldDeclaration(
         NodeList.nodeList(),
@@ -506,7 +339,7 @@ public class SimpleKeyProviderTranslator {
     dec.addMember(footprintInv);
   }
 
-  private void addAccessibleDef(ClassOrInterfaceDeclaration dec, List<SelectorDec> selector) {
+  protected void addAccessibleDef(ClassOrInterfaceDeclaration dec, List<SelectorDec> selector) {
 
     // All invariants have to relay on footprint
     JmlClassAccessibleDeclaration accessInv = new JmlClassAccessibleDeclaration(
@@ -597,6 +430,10 @@ public class SimpleKeyProviderTranslator {
     results.add(resImpl);
   }
 
+  private String getIdentifier(String packageName, String className) {
+    return packageName + "." + className;
+  }
+
   private void translateAbstractionApplicant(
       Abstraction abstraction) {
     //TODO: Extract package name from abstraction or report warning
@@ -606,10 +443,6 @@ public class SimpleKeyProviderTranslator {
     System.err.println("Abstr Dec: " + getIdentifier(packageName, className));
 
     createAbstractClass(abstraction, packageName, className);
-  }
-
-  private String getIdentifier(String packageName, String className) {
-    return packageName + "." + className;
   }
 
   private void translateAbstractionProvider(Abstraction abstraction) {
@@ -1245,6 +1078,173 @@ public class SimpleKeyProviderTranslator {
             DetailLevel.INSTANCE_INVARIANT ->
           Modifier.DefaultKeyword.JML_INSTANCE;
       };
+    }
+  }
+
+  record SimpleResult(
+      String packageName,
+      String className,
+      CompilationUnit cu) implements TranslationResult {
+    @Override
+    public Optional<String> extendSubDirectory() {
+      return Optional.ofNullable(packageName);
+    }
+
+    public String fileName() {
+      return className;
+    }
+
+    public String fileEnding() {
+      return ".java";
+    }
+
+    public void writeTo(Writer writer) throws IOException {
+      PrinterConfiguration config = new DefaultPrinterConfiguration();
+      DefaultPrettyPrinter printer = new DefaultPrettyPrinter(config);
+      writer.write(printer.print(cu));
+    }
+  }
+
+  private record SortTranslator(
+      Map<String, TypeTranslation> map) implements TypeTranslation.TypeTranslator {
+    public void store(TypeTranslation trans) {
+      //TODO: Do error check if translation is ambigous
+      this.map().put(trans.getClibSort().getName(), trans);
+    }
+
+    public TypeTranslation translate(Sort sort) {
+      TypeTranslation translation = this.map().get(sort.getName());
+      if (translation == null) {
+        //TODO: Report proper error
+        System.err.println(String.format("ERROR: The type '%s' could not be translated.", sort));
+        return null;
+      }
+      return translation;
+    }
+  }
+
+  private record FuncTranslator(
+      Map<String, FuncTranslation> map) implements FuncTranslation.FuncTranslator {
+
+    public void store(List<FuncTranslation> translations) {
+      //TODO: Error check if ambigous
+      for (FuncTranslation trans : translations) {
+        this.map().put(trans.getClibIdentifier().identifier().identifier(), trans);
+      }
+    }
+
+    public FuncTranslation translate(Term.Identifier.IdentifierValue identifier) {
+      FuncTranslation t = this.map().get(identifier.identifier().identifier());
+      if (t == null) {
+        System.err.println(String.format("ERROR: Translations for the identifier '%s' not found.", identifier));
+        return null;
+      }
+      return t;
+    }
+  }
+
+  //TODO: This is just a most simple implementation, might be reworked, but serves it purpose for now
+  private final class VariableScopeManager implements VariableScope.VariableTranslator {
+
+    Map<String, VariableScope> map = new HashMap<>();
+    Optional<Type> returnType = Optional.empty();
+    Optional<Type> ownerType = Optional.empty();
+    List<Parameter> parameters = new ArrayList<>();
+
+    public void add(SortedVar sortedVar) {
+      TypeTranslation t = sortTranslator.translate(sortedVar.sort());
+      VariableScopeElement el = new VariableScopeElement(
+          sortedVar.symbol(),
+          new NameExpr(sortedVar.symbol().identifier()),
+          sortedVar.sort(),
+          t.getJmlType(sortedVar.sort()),
+          t.hasFootprint());
+      map.put(el.getClibSymbol().identifier(), el);
+    }
+
+    public void remove(SortedVar sortedVar) {
+      map.remove(sortedVar.symbol().identifier());
+    }
+
+    public void add(Formal formal) {
+      TypeTranslation t = sortTranslator.translate(formal.sort());
+      Symbol s = new Symbol(formal.identifier().identifier());
+      //TODO: find better way for result
+      if (formal.identifier().identifier().equals("result")) {
+        VariableScopeElement el = new VariableScopeElement(
+            s,
+            new NameExpr("\\result"),
+            formal.sort(),
+            t.getJmlType(formal.sort()),
+            t.hasFootprint());
+        this.returnType = Optional.ofNullable(t.getJmlType(formal.sort()));
+        map.put(el.getClibSymbol().identifier(), el);
+      } else if (formal.identifier().identifier().equals("this")) {
+        this.ownerType = Optional.ofNullable(t.getJmlType(formal.sort()));
+        VariableScopeElement el = new VariableScopeElement(
+            s,
+            new ThisExpr(),
+            formal.sort(),
+            t.getJmlType(formal.sort()),
+            t.hasFootprint());
+        map.put(el.getClibSymbol().identifier(), el);
+      } else {
+        VariableScopeElement el = new VariableScopeElement(
+            s,
+            new NameExpr(formal.identifier().identifier()),
+            formal.sort(),
+            t.getJmlType(formal.sort()),
+            t.hasFootprint());
+        map.put(el.getClibSymbol().identifier(), el);
+        parameters.add(new Parameter(
+            t.getJmlType(formal.sort()),
+            new SimpleName(formal.identifier().identifier())));
+      }
+    }
+
+    public Optional<VariableScope> translate(Symbol symbol) {
+      return Optional.ofNullable(map.get(symbol.identifier()));
+    }
+  }
+
+  private record VariableScopeElement(
+      Symbol symbol,
+      Expression expression,
+      Sort clibResultType,
+      Type jmlResultType,
+      boolean hasFootprint) implements VariableScope {
+    public Symbol getClibSymbol() {
+      return symbol;
+    }
+
+    public Expression getJmlTerm() {
+      return expression;
+    }
+
+    public Sort getClibResultType() {
+      return clibResultType;
+    }
+
+    public Type getJmlResultType() {
+      return jmlResultType;
+    }
+
+    public boolean hasFootprint() {
+      return hasFootprint;
+    }
+  }
+
+  private final class IndexFab implements TypeTranslation.IndexFabric {
+    private char i = 'a';
+
+    public SimpleName getNextIndex() {
+      char res = i;
+      i++;
+      if (i > 'z') {
+        //TODO: report Error
+        i = 'a';
+      }
+      return new SimpleName(String.valueOf(res));
     }
   }
 }
