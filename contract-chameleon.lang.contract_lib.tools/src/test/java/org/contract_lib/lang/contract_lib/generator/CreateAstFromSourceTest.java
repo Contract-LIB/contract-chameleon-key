@@ -6,7 +6,9 @@ import org.junit.jupiter.params.provider.Arguments;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 import java.util.stream.Stream;
@@ -30,20 +32,18 @@ class CreateAstFromSourceTest {
 
   static Stream<Arguments> positiveDefinitions() {
     return Stream.of(
-      Arguments.of("ast/DeclareAbstraction.clib", 3, 0, 0),
-      Arguments.of("ast/DeclareDatatype.clib", 0, 3, 0),
-      Arguments.of("ast/DeclareSort.clib", 0, 0, 4)
-    );
+        Arguments.of("ast/DeclareAbstraction.clib", 3, 0, 0),
+        Arguments.of("ast/DeclareDatatype.clib", 0, 3, 0),
+        Arguments.of("ast/DeclareSort.clib", 0, 0, 4));
   }
 
   @ParameterizedTest
   @MethodSource("positiveDefinitions")
   void testDeclarations(
-    String filePath,
-    int nAbstractions,
-    int nDatatypes,
-    int nSorts
-  ) throws Exception {
+      String filePath,
+      int nAbstractions,
+      int nDatatypes,
+      int nSorts) throws Exception {
     InputStream in = getClass().getClassLoader().getResourceAsStream(filePath);
     assertNotNull(in, "Input stream not created from resource.");
 
@@ -54,7 +54,7 @@ class CreateAstFromSourceTest {
     ContractLibAst ast = generator.generate(filePath, charStream);
     System.err.println(ast);
 
-    assertDoesNotThrow(messageManager::check, "There was an message generated.");
+    assertFalse(messageManager::errorFound, "There was an message generated.");
     assertNotNull(ast, "AST could not be created.");
 
     assertEquals(nAbstractions, ast.abstractions().size(), "Wrong numner of abstractions found.");
@@ -64,18 +64,16 @@ class CreateAstFromSourceTest {
 
   static Stream<Arguments> definitionErrors() {
     return Stream.of(
-      Arguments.of("ast/InvalidTopLevel.clib", 2, 2, 3)
-    );
+        Arguments.of("ast/InvalidTopLevel.clib", 2, 2, 3));
   }
 
   @ParameterizedTest
   @MethodSource("definitionErrors")
   void testInvalidDeclarations(
-    String filePath,
-    int nAbstractions,
-    int nDatatypes,
-    int nSorts
-  ) throws Exception {
+      String filePath,
+      int nAbstractions,
+      int nDatatypes,
+      int nSorts) throws Exception {
     InputStream in = getClass().getClassLoader().getResourceAsStream(filePath);
     assertNotNull(in, "Input stream not created from resource.");
 
@@ -88,11 +86,9 @@ class CreateAstFromSourceTest {
     System.err.println(ast);
     messageManager.writeStdErr();
 
-    ChameleonMessageGroup exceptions = assertThrows(
-      ChameleonMessageGroup.class,
-      messageManager::check,
-      "An error is expected."
-    );
+    assertTrue(
+        messageManager::errorFound,
+        "An error is expected.");
 
     //TODO: Check number of exceptions
     //TODO: Report error when bracket is missing

@@ -2,17 +2,13 @@
 package org.contract_lib.contract_chameleon;
 
 import java.util.List;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
-import java.io.File;
 import java.io.BufferedWriter;
 import java.io.Writer;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
-import org.contract_lib.contract_chameleon.Adapter;
 
 import org.contract_lib.contract_chameleon.error.ChameleonMessageManager;
 
