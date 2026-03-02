@@ -35,7 +35,7 @@ public class AdapterMap<T extends AdapterId> implements Iterable<java.util.Map.E
     String adapterList = sortedElements()
         .map(this::printListElement)
         .collect(Collectors.joining(System.lineSeparator()));
-    return "Adapters" + System.lineSeparator() + adapterList;
+    return adapterList;
   }
 
   public Stream<Map.Entry<String, T>> sortedElements() {

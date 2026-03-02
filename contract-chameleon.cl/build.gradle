@@ -14,12 +14,19 @@ repositories {
 
 dependencies {
     implementation project(":contract-chameleon.core")
+    implementation project(":contract-chameleon.error")
   
+    implementation 'info.picocli:picocli:4.7.7'
+    annotationProcessor 'info.picocli:picocli-codegen:4.7.7'
 
     // Use JUnit Jupiter for testing.
     testImplementation libs.junit.jupiter
     //testImplementation 'org.junit.jupiter:junit-jupiter:5.7.1'
     //testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+compileJava {
+    options.compilerArgs += ["-Aproject=${project.group}/${project.name}"]
 }
 
 // Apply a specific Java toolchain to ease working on different environments.

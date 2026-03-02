@@ -1,39 +1,61 @@
 package org.contract_lib;
 
+import java.util.List;
+
+import org.contract_lib.context_providers.ResultDirectoryContextProvider;
+import org.contract_lib.context_providers.SourcePathsContextProvider;
 import org.contract_lib.contract_chameleon.Adapter;
 import org.contract_lib.contract_chameleon.AdapterMap;
+import org.contract_lib.contract_chameleon.SharedContextManager;
+import org.contract_lib.contract_chameleon.SharedContextManager.SharedContextProvider;
+import org.contract_lib.contract_chameleon.SharedContextManager.UserProvidedContext;
+import org.contract_lib.contract_chameleon.error.ChameleonMessageManager;
 
+import picocli.CommandLine;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
+
+@Command(name = "contract-chameleon")
 class ContractChameleon {
 
+  @Option(names = { "-h", "--help" }, usageHelp = true) // description = "display description"
+  boolean usageHelpRequested;
+
+  private static List<SharedContextProvider<? extends UserProvidedContext>> interfaceProvider = List.of(
+      new SourcePathsContextProvider(),
+      new ResultDirectoryContextProvider());
+
+  private AdapterMap<Adapter> adapterMap = new AdapterMap<Adapter>(Adapter.class);
+  private ChameleonMessageManager messageManager = new ChameleonMessageManager();
+  private SharedContextManager contextManager = new SharedContextManager(messageManager);
+
   public static void main(String[] args) {
+    ContractChameleon cc = new ContractChameleon();
+    CommandLine cl = new CommandLine(cc);
 
-    String classpath = System.getProperty("java.class.path");
-    System.err.println("Classpath: " + classpath);
+    interfaceProvider.forEach(cc.contextManager::putProvider);
 
-    Adapter adapter = getAdapter(args);
+    cl.getCommandSpec()
+        .usageMessage()
+        .footer("Loaded Adapters: ", cc.adapterMap.adapterList());
 
-    if (adapter == null) {
-      System.err.println("Adapter not found!");
-      return;
-    }
+    cc.adapterMap
+        .sortedElements()
+        .forEach((e) -> {
+          CommandLine cSub = new CommandLine(new AdapterCommand(e.getValue(), args));
 
-    adapter.perform(args);
-  }
+          e.getValue()
+              .argumentContextsFromInterface()
+              .forEach(s -> {
+                cc.contextManager
+                    .getProvider(s)
+                    .ifPresent(p -> cSub.addMixin(s.getName(), p));
+              });
 
-  private static final String DEAFULT_ADAPTER_NAME = "help";
+          cl.addSubcommand(e.getKey(), cSub);
+        });
 
-  public static Adapter getAdapter(String[] args) {
-    AdapterMap<Adapter> adapterMap = new AdapterMap<Adapter>(Adapter.class);
-
-    if (args.length < 1) {
-      System.err.println("No adapter selected!");
-      return adapterMap.get(DEAFULT_ADAPTER_NAME);
-    }
-
-    System.err.println("User Dir:" + System.getProperty("user.dir"));
-
-    String adapterName = args[0];
-
-    return adapterMap.get(adapterName);
+    int res = cl.execute(args);
+    System.exit(res);
   }
 }
