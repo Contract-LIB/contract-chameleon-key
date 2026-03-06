@@ -156,8 +156,9 @@ public class SimpleKeyProviderTranslator {
     funcLoader.forEach(f -> funcTranslator.store(f.getAll()));
   }
 
-  public List<TranslationResult> translateContractLibAstApplicant(ContractLibAst ast) {
-
+  public List<TranslationResult> translateContractLibAst(
+      ContractLibAst ast,
+      boolean provider) {
     results.add(keyTranslator.translate(ast));
     keyTranslator.getSorts().stream()
         .map(LogicTypeTranslation::new)
@@ -168,7 +169,7 @@ public class SimpleKeyProviderTranslator {
     //Creates the list of all provided abstractions
     ast.abstractions()
         .stream()
-        .forEach(this::translateAbstractionApplicant);
+        .forEach(a -> translateAbstraction(a, provider));
 
     //Populates all abstractions with their contracts
     ast.contracts()
@@ -176,28 +177,6 @@ public class SimpleKeyProviderTranslator {
         .forEach(this::translateContract);
 
     //TODO: create example main class
-
-    return results;
-  }
-
-  public List<TranslationResult> translateContractLibAstProvider(ContractLibAst ast) {
-
-    results.add(keyTranslator.translate(ast));
-    keyTranslator.getSorts().stream()
-        .map(LogicTypeTranslation::new)
-        .forEach(sortTranslator::store);
-
-    funcTranslator.store(keyTranslator.getCons());
-
-    //Creates the list of all provided abstractions
-    ast.abstractions()
-        .stream()
-        .forEach(this::translateAbstractionProvider);
-
-    //Populates all abstractions with their contracts
-    ast.contracts()
-        .stream()
-        .forEach(this::translateContract);
 
     return results;
   }
@@ -231,7 +210,7 @@ public class SimpleKeyProviderTranslator {
         .forEach(s -> addGhostField(dec, s));
   }
 
-  void addGhostField(ClassOrInterfaceDeclaration dec, SelectorDec selector) {
+  private void addGhostField(ClassOrInterfaceDeclaration dec, SelectorDec selector) {
     TypeTranslation translation = sortTranslator.translate(selector.sort());
 
     FieldDeclaration fieldDec = new FieldDeclaration(
@@ -298,7 +277,6 @@ public class SimpleKeyProviderTranslator {
   }
 
   protected void addAbstractionFootprint(ClassOrInterfaceDeclaration dec) {
-
     FieldDeclaration fieldDec = new FieldDeclaration(
         NodeList.nodeList(),
         new ClassOrInterfaceType(
@@ -339,6 +317,24 @@ public class SimpleKeyProviderTranslator {
   }
 
   protected void addAccessibleDef(ClassOrInterfaceDeclaration dec, List<SelectorDec> selector) {
+<<<<<<< HEAD
+=======
+    /*
+    // The footprint invariant may only depend on itself
+    JmlClassAccessibleDeclaration accessFootprint = new JmlClassAccessibleDeclaration(
+        NodeList.nodeList(),
+        NodeList.nodeList(),
+        new NameExpr(new SimpleName("footprint")),
+        NodeList.nodeList(
+            new FieldAccessExpr(new ThisExpr(), NodeList.nodeList(), new SimpleName("footprint"))),
+        null //Measured by
+    )
+        .addModifier(Modifier.DefaultKeyword.PUBLIC)
+        .addModifier(Modifier.DefaultKeyword.JML_INSTANCE);
+    
+    dec.addMember(accessFootprint);
+    */
+>>>>>>> 012b8ba (some refactoring)
 
     // All invariants have to relay on footprint
     JmlClassAccessibleDeclaration accessInv = new JmlClassAccessibleDeclaration(
@@ -433,8 +429,8 @@ public class SimpleKeyProviderTranslator {
     return packageName + "." + className;
   }
 
-  private void translateAbstractionApplicant(
-      Abstraction abstraction) {
+  private void translateAbstraction(
+      Abstraction abstraction, boolean provider) {
     //TODO: Extract package name from abstraction or report warning
     String packageName = packageName(abstraction);
     String className = className(abstraction);
@@ -442,18 +438,8 @@ public class SimpleKeyProviderTranslator {
     System.err.println("Abstr Dec: " + getIdentifier(packageName, className));
 
     createAbstractClass(abstraction, packageName, className);
-  }
-
-  private void translateAbstractionProvider(Abstraction abstraction) {
-
-    //TODO: Extract package name from abstraction or report warning
-    String packageName = packageName(abstraction);
-    String className = className(abstraction);
-
-    System.err.println("Abstr Dec: " + getIdentifier(packageName, className));
-
-    createAbstractClass(abstraction, packageName, className);
-    createImplementationClass(abstraction, packageName, className);
+    if (provider)
+      createImplementationClass(abstraction, packageName, className);
   }
 
   private ExpressionPair translateExprPair(PrePostPair pair, VariableTranslator scope) {
@@ -624,7 +610,7 @@ public class SimpleKeyProviderTranslator {
     return assignable;
   }
 
-  protected List<JmlClause> disjuntClauses(
+  protected List<JmlClause> disjointClauses(
       JmlClauseKind kind,
       List<Formal> formals,
       Predicate<ArgumentMode> filter,
@@ -652,7 +638,7 @@ public class SimpleKeyProviderTranslator {
             new JmlSimpleExprClause(kind,
                 null,
                 NodeList.nodeList(),
-                createDisjunctClause(a, b)));
+                createDisjointClause(a, b)));
       }
     }
 
@@ -684,7 +670,7 @@ public class SimpleKeyProviderTranslator {
             NodeList.nodeList(createUnionClause(changeableFootprint)))));
   }
 
-  private MethodCallExpr createDisjunctClause(Expression a, Expression b) {
+  private MethodCallExpr createDisjointClause(Expression a, Expression b) {
     return new MethodCallExpr(null, new SimpleName("\\disjoint"),
         NodeList.nodeList(
             new FieldAccessExpr(a, FOOTPRINT_NAME),
@@ -703,10 +689,8 @@ public class SimpleKeyProviderTranslator {
             createUnionClause(expressions)));
   }
 
-  protected Optional<JmlClause> objectCreated(List<Formal> formals, VariableTranslator variableScope) {
-
+  protected Optional<List<JmlClause>> objectCreated(List<Formal> formals, VariableTranslator variableScope) {
     return formals.stream()
-        .filter((f) -> isReference(f, variableScope))
         .filter((f) -> ArgumentMode.OUT.equals(f.argumentMode()))
         .map(Formal::identifier)
         .map(variableScope::translate)
@@ -722,7 +706,6 @@ public class SimpleKeyProviderTranslator {
                 NodeList.nodeList(),
                 new MethodCallExpr(null, new SimpleName("\\invariant_for"),
                     NodeList.nodeList(new NameExpr(RESULT_LABEL))))));
-
   }
 
   public void translateContract(Contract contract) {
@@ -736,12 +719,11 @@ public class SimpleKeyProviderTranslator {
 
     VariableScopeManager variableScope = getParameterScope(contract.formals());
 
-
     //TODO: Check that owner matches
     Optional<Type> ownerType = variableScope.ownerType;
     Type returnType = getReturnT(
-    methodSignaturExtractor.isStatic(),
-            variableScope);
+        methodSignaturExtractor.isStatic(),
+        variableScope);
 
     List<ExpressionPair> clausePairs = contract.pairs()
         .stream()
@@ -756,13 +738,13 @@ public class SimpleKeyProviderTranslator {
         .setExpression(joinPostContracts(clausePairs))
         .setKind(ENSURES);
 
-    List<JmlClause> disPreClause = disjuntClauses(
+    List<JmlClause> disPreClause = disjointClauses(
         REQUIRES,
         contract.formals(),
         this::isInPrecondition,
         variableScope);
 
-    List<JmlClause> disPostClause = disjuntClauses(
+    List<JmlClause> disPostClause = disjointClauses(
         ENSURES,
         contract.formals(),
         this::isInPostcondition,
@@ -882,7 +864,7 @@ public class SimpleKeyProviderTranslator {
     return variableScope.parameters;
   }
 
-  Expression translateTerm(
+  private Expression translateTerm(
       Term term,
       VariableTranslator variableScope,
       IndexFab indexFabric) {
@@ -900,7 +882,7 @@ public class SimpleKeyProviderTranslator {
         t -> this.translateAttributes(t, variableScope, indexFabric));
   }
 
-  Expression translateTermSpecConstant(
+  private Expression translateTermSpecConstant(
       Term.SpecConstant specCons,
       VariableTranslator variableScope,
       IndexFab indexFabric) {
@@ -909,7 +891,7 @@ public class SimpleKeyProviderTranslator {
     return new BooleanLiteralExpr(false);
   }
 
-  Expression translateTermIdentifierAs(
+  private Expression translateTermIdentifierAs(
       Term.Identifier.IdentifierAs idAs,
       VariableTranslator variableScope,
       IndexFab indexFabric) {
@@ -918,7 +900,7 @@ public class SimpleKeyProviderTranslator {
     return new BooleanLiteralExpr(false);
   }
 
-  Expression translateTermIdentifierValue(
+  private Expression translateTermIdentifierValue(
       Term.Identifier.IdentifierValue idV,
       VariableTranslator variableScope,
       IndexFab indexFabric) {
@@ -936,7 +918,7 @@ public class SimpleKeyProviderTranslator {
     });
   }
 
-  Expression translateTermMethodApplication(
+  private Expression translateTermMethodApplication(
       Term.MethodApplication methAppl,
       VariableTranslator variableScope,
       IndexFab indexFabric) {
@@ -956,7 +938,7 @@ public class SimpleKeyProviderTranslator {
     return trans.getJmlTerm(terms);
   }
 
-  Expression translateTermOld(
+  private Expression translateTermOld(
       Term.Old oldTerm,
       VariableTranslator variableScope,
       IndexFab indexFabric) {
@@ -968,14 +950,14 @@ public class SimpleKeyProviderTranslator {
         NodeList.nodeList(content));
   }
 
-  Expression translateTermBooleanLiteral(
+  private Expression translateTermBooleanLiteral(
       Term.BooleanLiteral booleanLit,
       VariableTranslator variableScope,
       IndexFab indexFabric) {
     return new BooleanLiteralExpr(booleanLit.value());
   }
 
-  Expression translateTermNumeralLiteral(
+  private Expression translateTermNumeralLiteral(
       Term.NumberLiteral numeralLit,
       VariableTranslator variableScope,
       IndexFab indexFabric) {
@@ -986,7 +968,7 @@ public class SimpleKeyProviderTranslator {
     return new DoubleLiteralExpr(numeralLit.value());
   }
 
-  Expression translateTermLetBinding(
+  private Expression translateTermLetBinding(
       Term.LetBinding letBind,
       VariableTranslator variableScope,
       IndexFab indexFabric) {
@@ -995,14 +977,14 @@ public class SimpleKeyProviderTranslator {
     return new BooleanLiteralExpr(false);
   }
 
-  JmlQuantifiedExpr.JmlBinder translateBinder(Quantor quantor) {
+  private JmlQuantifiedExpr.JmlBinder translateBinder(Quantor quantor) {
     return switch (quantor) {
       case Quantor.ALL -> JmlQuantifiedExpr.JmlDefaultBinder.FORALL;
       case Quantor.EXISTS -> JmlQuantifiedExpr.JmlDefaultBinder.EXISTS;
     };
   }
 
-  Expression translateQuantorBinding(
+  private Expression translateQuantorBinding(
       Term.QuantorBinding quantBind,
       VariableTranslator variableScope,
       IndexFab indexFabric) {
@@ -1047,7 +1029,7 @@ public class SimpleKeyProviderTranslator {
     return top;
   }
 
-  Expression translateMatchBinding(
+  private Expression translateMatchBinding(
       Term.MatchBinding matchBind,
       VariableTranslator variableScope,
       IndexFab indexFabric) {
@@ -1056,7 +1038,7 @@ public class SimpleKeyProviderTranslator {
     return new BooleanLiteralExpr(false);
   }
 
-  Expression translateAttributes(
+  private Expression translateAttributes(
       Term.Attributes attributes,
       VariableTranslator variableScope,
       IndexFab indexFabric) {
