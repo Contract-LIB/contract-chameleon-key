@@ -232,7 +232,6 @@ public class SimpleKeyProviderTranslator {
   }
 
   void addGhostField(ClassOrInterfaceDeclaration dec, SelectorDec selector) {
-
     TypeTranslation translation = sortTranslator.translate(selector.sort());
 
     FieldDeclaration fieldDec = new FieldDeclaration(
@@ -737,11 +736,12 @@ public class SimpleKeyProviderTranslator {
 
     VariableScopeManager variableScope = getParameterScope(contract.formals());
 
-    Optional<Type> returnT = variableScope.returnType;
+
     //TODO: Check that owner matches
     Optional<Type> ownerType = variableScope.ownerType;
-
-    Type returnType = returnT.orElseGet(VoidType::new);
+    Type returnType = getReturnT(
+    methodSignaturExtractor.isStatic(),
+            variableScope);
 
     List<ExpressionPair> clausePairs = contract.pairs()
         .stream()
@@ -874,6 +874,10 @@ public class SimpleKeyProviderTranslator {
     }
   }
 
+  protected Type getReturnT(boolean isStatic, VariableScopeManager variableScope) {
+    return variableScope.returnType.orElseGet(VoidType::new);
+  }
+
   protected List<Parameter> getParameters(VariableScopeManager variableScope) {
     return variableScope.parameters;
   }
@@ -1002,7 +1006,7 @@ public class SimpleKeyProviderTranslator {
       Term.QuantorBinding quantBind,
       VariableTranslator variableScope,
       IndexFab indexFabric) {
-    //TODO: Sort varaibles by type, only create one quantor per type.
+    //TODO: Sort variables by type, only create one quantor per type.
 
     JmlQuantifiedExpr.JmlBinder binder = translateBinder(quantBind.quantor());
     JmlQuantifiedExpr top = null;
@@ -1091,7 +1095,7 @@ public class SimpleKeyProviderTranslator {
     }
   }
 
-  record SimpleResult(
+  protected record SimpleResult(
       String packageName,
       String className,
       CompilationUnit cu) implements TranslationResult {
