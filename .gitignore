@@ -12,6 +12,7 @@
 **/.settings
 **/.project
 **/.classpath
+**/.factorypath
 **/bin
 
 # IntelliJ files
