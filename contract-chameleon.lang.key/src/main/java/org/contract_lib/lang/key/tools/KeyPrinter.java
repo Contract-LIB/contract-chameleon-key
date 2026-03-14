@@ -32,7 +32,7 @@ public class KeyPrinter {
   private static final String COLON = ",";
   private static final String EQUAL = "=";
   private static final String SEMICOLON = ";";
-  
+
   private static final String COMMAND_JAVA_SOURCES = "\\javaSource";
   private static final String COMMAND_CHOOSE_CONTRACT = "\\chooseContract";
   private static final String COMMAND_SORTS = "\\sorts";
@@ -52,19 +52,19 @@ public class KeyPrinter {
     if (!ast.sorts().isEmpty()) {
       printSorts(ast.sorts());
     }
-    if (!ast.functions().isEmpty()){
-     printFunctions(ast.functions());
+    if (!ast.functions().isEmpty()) {
+      printFunctions(ast.functions());
     }
-    if (!ast.datatypes().isEmpty()){
-     printDatatypes(ast.datatypes());
+    if (!ast.datatypes().isEmpty()) {
+      printDatatypes(ast.datatypes());
     }
   }
-  
+
   public void printDatatypes(List<KeyDatatype> dts) {
     printIndentation();
     print(COMMAND_DATATYPS);
     print(SPACE);
-    printBlock(()-> dts.forEach((d) -> this.printDatatype(d)));
+    printBlock(() -> dts.forEach((d) -> this.printDatatype(d)));
   }
 
   public void printDatatype(KeyDatatype dt) {
@@ -80,9 +80,9 @@ public class KeyPrinter {
 
   private String getConstructors(List<KeyDatatypeConstructor> constrs) {
     return constrs
-      .stream()
-      .map(this::getConstructor)
-      .collect(Collectors.joining(SPACE + VERTICAL_SEP + SPACE));
+        .stream()
+        .map(this::getConstructor)
+        .collect(Collectors.joining(SPACE + VERTICAL_SEP + SPACE));
   }
 
   private String getConstructor(KeyDatatypeConstructor c) {
@@ -93,10 +93,10 @@ public class KeyPrinter {
   }
 
   private String getArguments(List<KeyArgument> args) {
-    return args 
-      .stream()
-      .map(this::getArgument)
-      .collect(Collectors.joining(COLON + SPACE));
+    return args
+        .stream()
+        .map(this::getArgument)
+        .collect(Collectors.joining(COLON + SPACE));
   }
 
   private String getArgument(KeyArgument arg) {
@@ -116,14 +116,16 @@ public class KeyPrinter {
     print(SEMICOLON);
     printNewLine();
   }
+
   public String name(KeySort.Internal internalSort) {
     return internalSort.name();
   }
+
   public String name(KeySort.Custom customSort) {
     return customSort.name();
   }
 
-  public void printFunctions(List<KeyFunction> functions)  {
+  public void printFunctions(List<KeyFunction> functions) {
     printIndentation();
     print(COMMAND_FUNCTIONS);
     print(SPACE);
@@ -132,26 +134,27 @@ public class KeyPrinter {
 
   public void printParameters(List<KeySort> parameters) {
     String joinedParameters = parameters
-      .stream()
-      .map((s) -> s.perform(this::name, this::name))
-      .collect(Collectors.joining(COLON + SPACE));
-    
+        .stream()
+        .map((s) -> s.perform(this::name, this::name))
+        .collect(Collectors.joining(COLON + SPACE));
+
     print(joinedParameters);
   }
 
   public void printFunction(KeyFunction func) {
     printIndentation();
-    func.perform(this::printUniqueFunction,this::printDefaultFunction);
+    func.perform(this::printUniqueFunction, this::printDefaultFunction);
     print(SEMICOLON);
     printNewLine();
   }
 
-  public Void printUniqueFunction(KeyFunction.UniqueFunction funcDec)  {
+  public Void printUniqueFunction(KeyFunction.UniqueFunction funcDec) {
     print(MODIFIER_UNIQUE);
     print(SPACE);
     return printDefaultFunction(funcDec.function());
   }
-  public Void printDefaultFunction(KeyFunction.DefaultFunction funcDec)  {
+
+  public Void printDefaultFunction(KeyFunction.DefaultFunction funcDec) {
     print(funcDec.returnType().<String>perform(this::name, this::name));
     print(SPACE);
     print(funcDec.name());

@@ -3,7 +3,7 @@ package org.contract_lib.contract_chameleon;
 import java.util.HashMap;
 import java.util.Optional;
 
-import org.contract_lib.contract_chameleon.error.ChameleonInfo;
+import org.contract_lib.contract_chameleon.contexts.MessageContext;
 import org.contract_lib.contract_chameleon.error.ChameleonMessageManager;
 import org.contract_lib.contract_chameleon.error.ChameleonReportable;
 
@@ -20,19 +20,16 @@ import org.contract_lib.contract_chameleon.error.ChameleonReportable;
  */
 public final class SharedContextManager {
 
-  private boolean allwaysRecreate;
+  //TODO: Remove message manager.
   private ChameleonMessageManager messageManager;
-
-  public SharedContextManager(ChameleonMessageManager messageManager) {
-    this(messageManager, false);
-  }
-
-  public SharedContextManager(ChameleonMessageManager messageManager, boolean allwaysRecreate) {
-    this.allwaysRecreate = allwaysRecreate;
-    this.messageManager = messageManager;
-  }
-
+  private MessageContext messageContext;
   private HashMap<Class<?>, SharedContext> contextCache = new HashMap<>();
+
+  public SharedContextManager(MessageContext messageContext) {
+    this.messageContext = messageContext;
+    this.messageManager = messageContext.getMessageManager();
+    this.contextCache.put(MessageContext.class, this.messageContext);
+  }
 
   // The providers that can be used to create a context.
   private HashMap<Class<?>, SharedContextProvider<? extends SharedContext>> providerMap = new HashMap<>();
@@ -42,11 +39,13 @@ public final class SharedContextManager {
    * This method is called by the interface for each provider supported.
    * The providers must not be able to generate the context when this method is called.
    * However, when the adapter is performed they must be able to provide their context.
+   * <p>
+   *
    * 
    * @param <C> The context that is supported.
-   * @param provider The provider 
+   * @param provider The provider that should be available to adapters that it require.
    */
-  public <C extends UserProvidedContext> void putProvider(SharedContextProvider<C> provider) {
+  public <C extends InterfaceProvidedContext> void putProvider(SharedContextProvider<C> provider) {
     if (providerMap.containsKey(provider.getContext())) {
       this.messageManager.report(new ChameleonReportable() {
         @Override
@@ -81,6 +80,11 @@ public final class SharedContextManager {
   }
   */
 
+  /// Short access without optional unwrap for the message context: {@code sharedContextManager.getContext(MessageContext.class)}.
+  public MessageContext getMessageContext() {
+    return messageContext;
+  }
+
   /** Access a shared context, that can be created by a provider.
    * 
    * @param <C> The type of context to be accessed.
@@ -88,9 +92,6 @@ public final class SharedContextManager {
    * @return The shared context requested, the optional is empty if there was an error in the context creation.
    */
   public <C extends SharedContext> Optional<C> getContext(SharedContextProvider<C> provider) {
-    if (allwaysRecreate) {
-      return this.createAndStore(provider);
-    }
     Optional<C> cacheContext = Optional.ofNullable((C) contextCache.get(provider.getContext()))
         .or(() -> this.createAndStore(provider));
 
@@ -103,16 +104,16 @@ public final class SharedContextManager {
    * This context must be created by the user interface provider.
    *
    * @param <C> The type of context to be accessed.
-   * @param expectedContext
-   * @return
+   * @param expectedContext The class of the context that is expected. 
+   * @return The shared context requested, the optional is empty if there was an error in the context creation.
    */
-  public <C extends UserProvidedContext> Optional<C> getContext(Class<C> expectedContext) {
+  public <C extends InterfaceProvidedContext> Optional<C> getContext(Class<C> expectedContext) {
     return this.getProvider(expectedContext)
         .flatMap(this::getContext);
   }
 
   private <C extends SharedContext> Optional<C> createAndStore(SharedContextProvider<C> provider) {
-    Optional<C> context = Optional.ofNullable(provider.createContext(this.messageManager));
+    Optional<C> context = Optional.ofNullable(provider.createContext(this));
     context.ifPresentOrElse((c) -> this.contextCache.put(provider.getContext(), c),
         () -> this.messageManager.report(new ChameleonReportable() {
           @Override
@@ -134,7 +135,7 @@ public final class SharedContextManager {
    * @param expectedContext The context that is expected.
    * @return An optional, containing the context or empty, if the context could not be provided by the interface.
    */
-  public <C extends UserProvidedContext> Optional<SharedContextProvider<C>> getProvider(Class<C> expectedContext) {
+  public <C extends InterfaceProvidedContext> Optional<SharedContextProvider<C>> getProvider(Class<C> expectedContext) {
     // Identify the provider that is responsible for creating the context.
     Optional<SharedContextProvider<C>> o_provider = Optional
         .ofNullable((SharedContextProvider<C>) providerMap.get(expectedContext));
@@ -144,7 +145,7 @@ public final class SharedContextManager {
   public interface SharedContext {
   }
 
-  public interface UserProvidedContext extends SharedContext {
+  public interface InterfaceProvidedContext extends SharedContext {
   }
 
   public interface MergableContext<C extends SharedContext> extends SharedContext {
@@ -172,9 +173,9 @@ public final class SharedContextManager {
      * <p>
      * After the object is created it is considered immutable.
      *
-     * @param messageManager a message manager for printing messages to the user.
+     * @param contextManager access different contexts in the creation process of the new context. (You might not refere to {@link InterfaceProvidedContext}.)
      * @return an instance of the shared context.
      */
-    public C createContext(ChameleonMessageManager messageManager);
+    public C createContext(SharedContextManager sharedContextManager);
   }
 }

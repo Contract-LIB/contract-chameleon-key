@@ -61,7 +61,7 @@ import com.github.javaparser.printer.configuration.DefaultPrinterConfiguration;
 import com.github.javaparser.printer.configuration.PrinterConfiguration;
 import com.google.common.base.Predicate;
 
-import org.contract_lib.contract_chameleon.ExportAdapter.TranslationResult;
+import org.contract_lib.contract_chameleon.adapters.ExportAdapter.TranslationResult;
 import org.contract_lib.contract_chameleon.error.ChameleonMessageManager;
 
 import org.contract_lib.lang.contract_lib.ast.ContractLibAst;

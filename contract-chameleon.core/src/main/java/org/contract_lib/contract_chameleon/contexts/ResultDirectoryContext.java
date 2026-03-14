@@ -5,7 +5,9 @@ import java.nio.file.Paths;
 
 import org.contract_lib.contract_chameleon.SharedContextManager;
 
-public class ResultDirectoryContext implements SharedContextManager.UserProvidedContext {
+/** Context for accessing a {@link Path} to the directory where the results should be generated. 
+ */
+public class ResultDirectoryContext implements SharedContextManager.InterfaceProvidedContext {
 
   /// Default constructor when no custom path is set for the result directory.
   public ResultDirectoryContext() {

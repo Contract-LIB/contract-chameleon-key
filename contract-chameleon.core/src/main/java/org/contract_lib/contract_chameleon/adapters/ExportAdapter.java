@@ -1,5 +1,5 @@
 
-package org.contract_lib.contract_chameleon;
+package org.contract_lib.contract_chameleon.adapters;
 
 import java.util.List;
 
@@ -10,7 +10,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import org.contract_lib.contract_chameleon.SharedContextManager.UserProvidedContext;
+import org.contract_lib.contract_chameleon.Adapter;
+import org.contract_lib.contract_chameleon.SharedContextManager.InterfaceProvidedContext;
 import org.contract_lib.contract_chameleon.contexts.ResultDirectoryContext;
 import org.contract_lib.contract_chameleon.contexts.SourcePathsContext;
 import org.contract_lib.contract_chameleon.error.ChameleonException;
@@ -24,7 +25,7 @@ public abstract class ExportAdapter extends Adapter {
       ChameleonMessageManager messageManager) throws IOException;
 
   @Override
-  public List<Class<? extends UserProvidedContext>> argumentContextsFromInterface() {
+  public List<Class<? extends InterfaceProvidedContext>> argumentContextsFromInterface() {
     return List.of(
         SourcePathsContext.class,
         ResultDirectoryContext.class);
@@ -47,20 +48,20 @@ public abstract class ExportAdapter extends Adapter {
   }
 
   @Override
-  public final void perform(String[] args) {
+  public final void perform() {
 
     System.err.println("============================== ");
     System.err.println("==== Perform Key Provider ==== "); //TODO: proper title provider
     System.err.println("============================== ");
 
-    if (args.length <= 1) {
-      System.err.println("Expected path to files in command"); //TODO: proper error handling
-      return;
-    }
-    String inputFileName = args[1];
-    if (args.length > 2) {
-      System.err.println("Only the first input file is handled at the moment.");
-    }
+    //if (args.length <= 1) {
+    //  System.err.println("Expected path to files in command"); //TODO: proper error handling
+    //  return;
+    //}
+    String inputFileName = ""; //= args[1];
+    //if (args.length > 2) {
+    //  System.err.println("Only the first input file is handled at the moment.");
+    //}
 
     try {
       List<TranslationResult> results = this.perform(List.of(Paths.get(inputFileName)), messageManager);

@@ -14,7 +14,7 @@ repositories {
 
 dependencies {
     //TODO: check dependencie, split to additional .key.tools package
-    implementation project(":contract-chameleon.error")
+    implementation project(":contract-chameleon.core")
 
     // Use JUnit Jupiter for testing.
     testImplementation libs.junit.jupiter

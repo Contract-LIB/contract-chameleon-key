@@ -5,7 +5,7 @@ plugins {
 rootProject.name = 'contract-chameleon'
 
 // Base Packages
-include('contract-chameleon.error')
+include('contract-chameleon.core')
 // - Language packages
 include('contract-chameleon.lang.contract_lib')
 include('contract-chameleon.lang.jml')
@@ -13,8 +13,6 @@ include('contract-chameleon.lang.key')
 include('contract-chameleon.lang.verifast')
 
 // Tool Packages
-// - fixed
-include('contract-chameleon.core')
 // - language
 include('contract-chameleon.lang.contract_lib.tools')
 
@@ -24,7 +22,6 @@ include('contract-chameleon.lang.contract_lib.tools')
 include('contract-chameleon.adapter.key.export')
 include('contract-chameleon.adapter.verifast.export')
 include('contract-chameleon.adapter.key.import')
-include('contract-chameleon.adapter.help')
 
 // - UI Packages
 include('contract-chameleon.cl')

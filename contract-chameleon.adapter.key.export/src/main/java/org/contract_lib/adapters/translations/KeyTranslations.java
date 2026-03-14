@@ -27,7 +27,7 @@ import org.contract_lib.lang.key.ast.KeyArgument;
 
 import org.contract_lib.lang.key.tools.KeyPrinter;
 import org.contract_lib.adapters.translations.functions.LogicTypeFuncTranslation;
-import org.contract_lib.contract_chameleon.ExportAdapter.TranslationResult;
+import org.contract_lib.contract_chameleon.adapters.ExportAdapter.TranslationResult;
 import org.contract_lib.contract_chameleon.error.ChameleonMessageManager;
 
 public class KeyTranslations {

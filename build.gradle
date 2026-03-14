@@ -28,7 +28,6 @@ dependencies {
   //runtimeOnly 'org.tool.b:adapter-extension-b:1.0.0-SNAPSHOT'
   
   // adapters from this repository
-  runtimeOnly project(":contract-chameleon.adapter.help")
   runtimeOnly project(":contract-chameleon.adapter.key.export")
   runtimeOnly project(":contract-chameleon.adapter.verifast.export")
   runtimeOnly project(":contract-chameleon.adapter.key.import")

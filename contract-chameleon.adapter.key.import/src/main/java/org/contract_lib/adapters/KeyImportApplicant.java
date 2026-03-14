@@ -7,7 +7,7 @@ import java.util.List;
 import java.nio.file.Path;
 
 import org.contract_lib.contract_chameleon.Adapter;
-import org.contract_lib.contract_chameleon.ImportAdapter;
+import org.contract_lib.contract_chameleon.adapters.ImportAdapter;
 import org.contract_lib.contract_chameleon.error.ChameleonMessageManager;
 
 import com.google.auto.service.AutoService;

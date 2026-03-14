@@ -5,8 +5,9 @@ import java.util.List;
 import java.nio.file.Path;
 
 import org.contract_lib.contract_chameleon.Adapter;
-import org.contract_lib.contract_chameleon.ExportAdapter;
+import org.contract_lib.contract_chameleon.adapters.ExportAdapter;
 import org.contract_lib.contract_chameleon.error.ChameleonMessageManager;
+import org.contract_lib.contract_chameleon.adapters.ExportAdapter.TranslationResult;
 
 import org.contract_lib.lang.contract_lib.ast.ContractLibAst;
 import org.contract_lib.lang.contract_lib.generator.ContractLibGenerator;

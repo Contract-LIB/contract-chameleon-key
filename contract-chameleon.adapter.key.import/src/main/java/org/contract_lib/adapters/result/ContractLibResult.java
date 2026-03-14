@@ -3,7 +3,7 @@ package org.contract_lib.adapters.result;
 import java.io.Writer;
 import java.io.IOException;
 
-import org.contract_lib.contract_chameleon.ImportAdapter.TranslationResult;
+import org.contract_lib.contract_chameleon.adapters.ImportAdapter.TranslationResult;
 import org.contract_lib.lang.contract_lib.ast.ContractLibAst;
 import org.contract_lib.lang.contract_lib.printer.ContractLibPrettyPrinter;
 

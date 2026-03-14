@@ -14,19 +14,17 @@ class AdapterCommand implements Callable<Integer> {
   boolean usageHelpRequested;
 
   private Adapter adapter;
-  private String[] args;
 
-  AdapterCommand(Adapter adapter, String[] args) {
+  AdapterCommand(Adapter adapter) {
     this.adapter = adapter;
-    this.args = args;
   }
 
-  public Integer call() throws Exception {
+  public Integer call() {
     String classpath = System.getProperty("java.class.path");
     System.err.println("Classpath: " + classpath);
     System.err.println("User Dir:" + System.getProperty("user.dir"));
 
-    adapter.perform(args);
+    adapter.perform();
 
     return 0;
   }

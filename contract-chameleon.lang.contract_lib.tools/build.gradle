@@ -10,7 +10,7 @@ repositories {
 }
 
 dependencies {
-    implementation project(":contract-chameleon.error")
+    implementation project(":contract-chameleon.core")
     implementation project(":contract-chameleon.lang.contract_lib")
 
     implementation 'org.antlr:antlr4-runtime'

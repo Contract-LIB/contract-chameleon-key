@@ -18,7 +18,6 @@ dependencies {
     annotationProcessor 'com.google.auto.service:auto-service:1.1.1'
 
     implementation project(":contract-chameleon.core")
-    implementation project(":contract-chameleon.error")
     implementation project(":contract-chameleon.lang.contract_lib")
     implementation project(":contract-chameleon.lang.key")
     implementation project(":contract-chameleon.lang.contract_lib.tools")
