@@ -24,55 +24,56 @@ def runIntegrationTest(String taskName, List<String> argList) {
     }
     ext.integrationTasks << taskName
 }
+def mode = "OVERRIDE"
 
 // - Integration test specifications
 
 // VeriFast export
 
-runIntegrationTest("vf-applicant", ["verifast-applicant", "./export/examples/counter.clib"])
-runIntegrationTest("vf-provider", ["verifast-provider", "./export/examples/counter.clib"])
+runIntegrationTest("vf-applicant", ["verifast-applicant", "./export/examples/counter.clib", "-m", "${mode}"])
+runIntegrationTest("vf-provider", ["verifast-provider", "./export/examples/counter.clib", "-m", "${mode}"])
 
-runIntegrationTest("vf-applicant-core", ["verifast-applicant", "./export/theories/Core.clib"])
-runIntegrationTest("vf-provider-core", ["verifast-provider", "./export/theories/Core.clib"])
+runIntegrationTest("vf-applicant-core", ["verifast-applicant", "./export/theories/Core.clib", "-m ", "${mode}"])
+runIntegrationTest("vf-provider-core", ["verifast-provider", "./export/theories/Core.clib", "-m", "${mode}"])
 
-runIntegrationTest("vf-applicant-ref", ["verifast-applicant", "./export/theories/Ref.clib"])
-runIntegrationTest("vf-provider-ref", ["verifast-provider", "./export/theories/Ref.clib"])
+runIntegrationTest("vf-applicant-ref", ["verifast-applicant", "./export/theories/Ref.clib", "-m", "${mode}"])
+runIntegrationTest("vf-provider-ref", ["verifast-provider", "./export/theories/Ref.clib", "-m", "${mode}"])
 
-runIntegrationTest("vf-applicant-seq", ["verifast-applicant", "./export/theories/Seq.clib"])
-runIntegrationTest("vf-provider-seq", ["verifast-provider", "./export/theories/Seq.clib"])
+runIntegrationTest("vf-applicant-seq", ["verifast-applicant", "./export/theories/Seq.clib", "-m ", "${mode}"])
+runIntegrationTest("vf-provider-seq", ["verifast-provider", "./export/theories/Seq.clib", "-m", "${mode}"])
 
-runIntegrationTest("vf-applicant-set", ["verifast-applicant", "./export/theories/FiniteSet.clib"])
-runIntegrationTest("vf-provider-set", ["verifast-provider", "./export/theories/FiniteSet.clib"])
+runIntegrationTest("vf-applicant-set", ["verifast-applicant", "./export/theories/FiniteSet.clib", "-m", "${mode}"])
+runIntegrationTest("vf-provider-set", ["verifast-provider", "./export/theories/FiniteSet.clib", "-m ", "${mode}"])
 
-runIntegrationTest("vf-applicant-map", ["verifast-applicant", "./export/theories/FiniteMap.clib"])
-runIntegrationTest("vf-provider-map", ["verifast-provider", "./export/theories/FiniteMap.clib"])
+runIntegrationTest("vf-applicant-map", ["verifast-applicant", "./export/theories/FiniteMap.clib", "-m", "${mode}"])
+runIntegrationTest("vf-provider-map", ["verifast-provider", "./export/theories/FiniteMap.clib", "-m", "${mode}"])
 
-runIntegrationTest("vf-applicant-adt", ["verifast-applicant", "./export/theories/AlgebraicDataTypes.clib"])
-runIntegrationTest("vf-provider-adt", ["verifast-provider", "./export/theories/AlgebraicDataTypes.clib"])
+runIntegrationTest("vf-applicant-adt", ["verifast-applicant", "./export/theories/AlgebraicDataTypes.clib", "-m", "${mode}"])
+runIntegrationTest("vf-provider-adt", ["verifast-provider", "./export/theories/AlgebraicDataTypes.clib", "-m", "${mode}"])
 
 
 // KeY export
 
-runIntegrationTest("key-applicant", ["key-applicant", "./export/examples/counter.clib"])
-runIntegrationTest("key-provider", ["key-provider", "./export/examples/counter.clib"])
+runIntegrationTest("key-applicant", ["key-applicant", "./export/examples/counter.clib", "-m", "${mode}"])
+runIntegrationTest("key-provider", ["key-provider", "./export/examples/counter.clib", "-m", "${mode}"])
 
-runIntegrationTest("key-applicant-core", ["key-applicant", "./export/theories/Core.clib"])
-runIntegrationTest("key-provider-core", ["key-provider", "./export/theories/Core.clib"])
+runIntegrationTest("key-applicant-core", ["key-applicant", "./export/theories/Core.clib", "-m", "${mode}"])
+runIntegrationTest("key-provider-core", ["key-provider", "./export/theories/Core.clib", "-m", "${mode}"])
 
-runIntegrationTest("key-applicant-ref", ["key-applicant", "./export/theories/Ref.clib"])
-runIntegrationTest("key-provider-ref", ["key-provider", "./export/theories/Ref.clib"])
+runIntegrationTest("key-applicant-ref", ["key-applicant", "./export/theories/Ref.clib", "-m", "${mode}"])
+runIntegrationTest("key-provider-ref", ["key-provider", "./export/theories/Ref.clib", "-m", "${mode}"])
 
-runIntegrationTest("key-applicant-seq", ["key-applicant", "./export/theories/Seq.clib"])
-runIntegrationTest("key-provider-seq", ["key-provider", "./export/theories/Seq.clib"])
+runIntegrationTest("key-applicant-seq", ["key-applicant", "./export/theories/Seq.clib", "-m", "${mode}"])
+runIntegrationTest("key-provider-seq", ["key-provider", "./export/theories/Seq.clib", "-m", "${mode}"])
 
-runIntegrationTest("key-applicant-set", ["key-applicant", "./export/theories/FiniteSet.clib"])
-runIntegrationTest("key-provider-set", ["key-provider", "./export/theories/FiniteSet.clib"])
+runIntegrationTest("key-applicant-set", ["key-applicant", "./export/theories/FiniteSet.clib", "-m", "${mode}"])
+runIntegrationTest("key-provider-set", ["key-provider", "./export/theories/FiniteSet.clib", "-m", "${mode}"])
 
-runIntegrationTest("key-applicant-map", ["key-applicant", "./export/theories/FiniteMap.clib"])
-runIntegrationTest("key-provider-map", ["key-provider", "./export/theories/FiniteMap.clib"])
+runIntegrationTest("key-applicant-map", ["key-applicant", "./export/theories/FiniteMap.clib", "-m", "${mode}"])
+runIntegrationTest("key-provider-map", ["key-provider", "./export/theories/FiniteMap.clib", "-m", "${mode}"])
 
-runIntegrationTest("key-applicant-adt", ["key-applicant", "./export/theories/AlgebraicDataTypes.clib"])
-runIntegrationTest("key-provider-adt", ["key-provider", "./export/theories/AlgebraicDataTypes.clib"])
+runIntegrationTest("key-applicant-adt", ["key-applicant", "./export/theories/AlgebraicDataTypes.clib", "-m", "${mode}"])
+runIntegrationTest("key-provider-adt", ["key-provider", "./export/theories/AlgebraicDataTypes.clib", "-m", "${mode}"])
 
 
 // KeY Import
