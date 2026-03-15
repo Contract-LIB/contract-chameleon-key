@@ -61,7 +61,7 @@ import com.github.javaparser.printer.configuration.DefaultPrinterConfiguration;
 import com.github.javaparser.printer.configuration.PrinterConfiguration;
 import com.google.common.base.Predicate;
 
-import org.contract_lib.contract_chameleon.adapters.ExportAdapter.TranslationResult;
+import org.contract_lib.contract_chameleon.contexts.ResultDirectoryContext.TranslationResult;
 import org.contract_lib.contract_chameleon.error.ChameleonMessageManager;
 
 import org.contract_lib.lang.contract_lib.ast.ContractLibAst;
@@ -132,9 +132,9 @@ public class SimpleKeyProviderTranslator {
       String packageName,
       String className,
       CompilationUnit cu) implements TranslationResult {
-
-    public String directoryName() {
-      return packageName;
+    @Override
+    public Optional<String> extendSubDirectory() {
+      return Optional.ofNullable(packageName);
     }
 
     public String fileName() {
@@ -145,7 +145,7 @@ public class SimpleKeyProviderTranslator {
       return ".java";
     }
 
-    public void write(Writer writer) throws IOException {
+    public void writeTo(Writer writer) throws IOException {
       PrinterConfiguration config = new DefaultPrinterConfiguration();
       DefaultPrettyPrinter printer = new DefaultPrettyPrinter(config);
       writer.write(printer.print(cu));

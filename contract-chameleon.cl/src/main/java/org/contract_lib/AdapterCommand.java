@@ -3,6 +3,7 @@ package org.contract_lib;
 import java.util.concurrent.Callable;
 
 import org.contract_lib.contract_chameleon.Adapter;
+import org.contract_lib.contract_chameleon.SharedContextManager;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -15,16 +16,14 @@ class AdapterCommand implements Callable<Integer> {
 
   private Adapter adapter;
 
-  AdapterCommand(Adapter adapter) {
+  AdapterCommand(Adapter adapter, SharedContextManager sharedContextManager) {
     this.adapter = adapter;
+    this.adapter.setSharedContextManager(sharedContextManager);
   }
 
   public Integer call() {
-    String classpath = System.getProperty("java.class.path");
-    System.err.println("Classpath: " + classpath);
-    System.err.println("User Dir:" + System.getProperty("user.dir"));
 
-    adapter.perform();
+    adapter.execute();
 
     return 0;
   }

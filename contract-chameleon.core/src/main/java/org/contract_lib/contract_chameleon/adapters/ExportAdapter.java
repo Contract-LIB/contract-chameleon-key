@@ -49,11 +49,6 @@ public abstract class ExportAdapter extends Adapter {
 
   @Override
   public final void perform() {
-
-    System.err.println("============================== ");
-    System.err.println("==== Perform Key Provider ==== "); //TODO: proper title provider
-    System.err.println("============================== ");
-
     //if (args.length <= 1) {
     //  System.err.println("Expected path to files in command"); //TODO: proper error handling
     //  return;

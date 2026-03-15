@@ -37,7 +37,7 @@ import org.contract_lib.adapters.translations.ImportPattern;
 import org.contract_lib.adapters.translations.types.ImportTypeTranslation;
 import org.contract_lib.adapters.translations.types.ImportTypeTranslator;
 import org.contract_lib.adapters.translations.types.PrimitiveTypeTranslation;
-import org.contract_lib.contract_chameleon.adapters.ImportAdapter.TranslationResult;
+import org.contract_lib.contract_chameleon.contexts.ResultDirectoryContext.TranslationResult;
 import org.contract_lib.contract_chameleon.error.ChameleonMessageManager;
 
 import org.contract_lib.lang.contract_lib.ast.Abstraction;

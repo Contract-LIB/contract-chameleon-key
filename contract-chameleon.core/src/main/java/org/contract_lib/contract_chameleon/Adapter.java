@@ -5,15 +5,28 @@ import java.util.Optional;
 
 import org.contract_lib.contract_chameleon.SharedContextManager.SharedContext;
 import org.contract_lib.contract_chameleon.SharedContextManager.SharedContextProvider;
+import org.contract_lib.contract_chameleon.contexts.AdapterContext;
 import org.contract_lib.contract_chameleon.contexts.MessageContext;
 import org.contract_lib.contract_chameleon.SharedContextManager.InterfaceProvidedContext;
 
-public abstract class Adapter implements AdapterId {
+public abstract class Adapter implements AdapterId, SharedContextProvider<AdapterContext> {
 
   private SharedContextManager sharedContextManager;
 
+  /// Public interface to execute the adapter.
+  public final void execute() {
+    sharedContextManager.setContext(this);
+
+    getMessageContext()
+        .logInfo(String.format("> Perform %s", getAdapterName()));
+
+    this.perform();
+  }
+
   /// Execute the adapter.
-  public abstract void perform();
+  /// <p>
+  /// This method should contain the logic of the adapter.
+  protected abstract void perform();
 
   /** Extend the help message for this adapter.
    * <p>
@@ -22,6 +35,14 @@ public abstract class Adapter implements AdapterId {
    */
   public Optional<String> helpMessage() {
     return Optional.empty();
+  }
+
+  /** Set the shared context manager for the adapter.
+   * 
+   * @param sharedContextManager the context manager that should be used and can be shared between all adapters.
+   */
+  public final void setSharedContextManager(SharedContextManager sharedContextManager) {
+    this.sharedContextManager = sharedContextManager;
   }
 
   /// Short access without optional unwrap for the message context: {@code sharedContextManager.getContext(MessageContext.class)}.
@@ -67,5 +88,15 @@ public abstract class Adapter implements AdapterId {
    */
   public List<Class<? extends InterfaceProvidedContext>> argumentContextsFromInterface() {
     return List.of();
+  }
+
+  @Override
+  public Class<AdapterContext> getContext() {
+    return AdapterContext.class;
+  }
+
+  @Override
+  public AdapterContext createContext(SharedContextManager sharedContextManager) {
+    return new AdapterContext(this);
   }
 }

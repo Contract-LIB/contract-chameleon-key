@@ -13,6 +13,7 @@ import org.contract_lib.contract_chameleon.error.ChameleonReportable;
  * and work as a cache.
  * You might extend a context with new data,
  * but never must delete context created.
+ * (This property is broken by {@link SettableContext} {@link DefaultContext}.)
  * <p>
  * Moreover,
  * every adapter is responsible for the creation of its required contexts,
@@ -112,17 +113,17 @@ public final class SharedContextManager {
         .flatMap(this::getContext);
   }
 
-  private <C extends SharedContext> Optional<C> createAndStore(SharedContextProvider<C> provider) {
-    Optional<C> context = Optional.ofNullable(provider.createContext(this));
-    context.ifPresentOrElse((c) -> this.contextCache.put(provider.getContext(), c),
-        () -> this.messageManager.report(new ChameleonReportable() {
-          @Override
-          public String getMessage() {
-            return String.format("Could not create context '%s' from provider '%s'.", provider.getClass());
-          };
-        }));
-
-    return context;
+  /** Access context provided via the interface.
+   * <p>
+   * A user context might be required by the {@link Adapter#argumentContextsFromInterface()} for a specific adapter.
+   * This context must be created by the user interface provider.
+   *
+   * @param <C> The type of context to be accessed.
+   * @param expectedContext The class of the context that is expected. 
+   * @return The shared context requested, the optional is empty if there was an error in the context creation.
+   */
+  public <C extends DefaultContext> C getDefaultContext(Class<C> expectedContext) {
+    return (C) contextCache.get(expectedContext);
   }
 
   /** Access a previously stored provider.
@@ -142,12 +143,44 @@ public final class SharedContextManager {
     return o_provider;
   }
 
+  /** Update or set a context that is always expected to be defined.
+   * <p>
+   * Set or replace an existing context.
+   */
+  public <C extends SettableContext & DefaultContext> Optional<C> setContext(SharedContextProvider<C> provider) {
+    return createAndStore(provider);
+  }
+
+  private <C extends SharedContext> Optional<C> createAndStore(SharedContextProvider<C> provider) {
+    Optional<C> context = Optional.ofNullable(provider.createContext(this));
+    context.ifPresentOrElse(
+        (c) -> this.contextCache.put(provider.getContext(), c),
+        () -> this.getMessageContext()
+            .logError(String.format("Could not create context '%s' from provider '%s'.", provider.getClass())));
+
+    return context;
+  }
+
   public interface SharedContext {
   }
 
+  /** A context that is provided by the interface.
+   */
   public interface InterfaceProvidedContext extends SharedContext {
   }
 
+  /** A context that provided by default.
+   */
+  public interface DefaultContext extends SharedContext {
+  }
+
+  /** A context that can be replaced (updated).
+   */
+  public interface SettableContext extends SharedContext {
+  }
+
+  /** A context that can be extended.
+   */
   public interface MergableContext<C extends SharedContext> extends SharedContext {
     /** Merges two contexts and creates a new context from it.
      * <p>

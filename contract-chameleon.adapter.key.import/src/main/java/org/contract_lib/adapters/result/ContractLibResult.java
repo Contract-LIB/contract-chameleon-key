@@ -1,9 +1,10 @@
 package org.contract_lib.adapters.result;
 
 import java.io.Writer;
+import java.util.Optional;
 import java.io.IOException;
 
-import org.contract_lib.contract_chameleon.adapters.ImportAdapter.TranslationResult;
+import org.contract_lib.contract_chameleon.contexts.ResultDirectoryContext.TranslationResult;
 import org.contract_lib.lang.contract_lib.ast.ContractLibAst;
 import org.contract_lib.lang.contract_lib.printer.ContractLibPrettyPrinter;
 
@@ -12,8 +13,9 @@ public record ContractLibResult(
     String className,
     ContractLibAst ast) implements TranslationResult {
 
-  public String directoryName() {
-    return packageName;
+  @Override
+  public Optional<String> extendSubDirectory() {
+    return Optional.ofNullable(packageName);
   }
 
   public String fileName() {
@@ -24,8 +26,7 @@ public record ContractLibResult(
     return ".clib";
   }
 
-  public void write(Writer writer) throws IOException {
-    //TODO: handle error handling
+  public void writeTo(Writer writer) throws IOException {
     ContractLibPrettyPrinter printer = new ContractLibPrettyPrinter(writer, null);
     printer.printContractLibAst(this.ast);
   }

@@ -4,6 +4,7 @@ import java.io.Writer;
 import java.io.IOException;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.ArrayList;
 
 import java.util.stream.Collectors;
@@ -27,7 +28,7 @@ import org.contract_lib.lang.key.ast.KeyArgument;
 
 import org.contract_lib.lang.key.tools.KeyPrinter;
 import org.contract_lib.adapters.translations.functions.LogicTypeFuncTranslation;
-import org.contract_lib.contract_chameleon.adapters.ExportAdapter.TranslationResult;
+import org.contract_lib.contract_chameleon.contexts.ResultDirectoryContext.TranslationResult;
 import org.contract_lib.contract_chameleon.error.ChameleonMessageManager;
 
 public class KeyTranslations {
@@ -36,19 +37,23 @@ public class KeyTranslations {
       KeyAst keyAst,
       ChameleonMessageManager manager) implements TranslationResult {
 
-    public String directoryName() {
-      return ".";
+    @Override
+    public Optional<String> extendSubDirectory() {
+      return Optional.empty();
     }
 
+    @Override
     public String fileName() {
       return "key_provider";
     }
 
+    @Override
     public String fileEnding() {
       return ".key";
     }
 
-    public void write(Writer writer) throws IOException {
+    @Override
+    public void writeTo(Writer writer) throws IOException {
       KeyPrinter printer = new KeyPrinter(writer, manager);
       printer.print(keyAst);
       printer.printNewLine();

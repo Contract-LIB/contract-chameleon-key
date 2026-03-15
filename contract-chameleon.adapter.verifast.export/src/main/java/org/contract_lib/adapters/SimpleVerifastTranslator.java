@@ -11,7 +11,7 @@ import java.util.ServiceLoader;
 import java.util.ServiceLoader.Provider;
 import java.util.stream.Collectors;
 
-import org.contract_lib.contract_chameleon.adapters.ExportAdapter.TranslationResult;
+import org.contract_lib.contract_chameleon.contexts.ResultDirectoryContext.TranslationResult;
 import org.contract_lib.contract_chameleon.error.ChameleonMessageManager;
 
 import org.contract_lib.lang.contract_lib.ast.ContractLibAst;

@@ -47,7 +47,11 @@ import org.contract_lib.contract_chameleon.error.ChameleonReportable;
  * <li> <b>Debug</b> Logs exception, error, warning, info and debug messages.
  * </ol>
  */
-public final class MessageContext implements SharedContextManager.InterfaceProvidedContext {
+public final class MessageContext implements
+    SharedContextManager.InterfaceProvidedContext,
+    SharedContextManager.DefaultContext {
+
+  //TODO: Decide about the proper interface of this context.
 
   // TODO: Remove dependencies on message manager. Only this class should manage all messages.
   private ChameleonMessageManager manager;
@@ -139,6 +143,15 @@ public final class MessageContext implements SharedContextManager.InterfaceProvi
     });
   }
 
+  public void logWarning(String string) {
+    this.manager.report(new ChameleonReportable() {
+      @Override
+      public String getMessage() {
+        return "WARNING: " + string;
+      }
+    });
+  }
+
   public void logInfo(String string) {
     this.manager.report(new ChameleonReportable() {
       @Override
@@ -184,7 +197,7 @@ public final class MessageContext implements SharedContextManager.InterfaceProvi
   public void log() {
     //TODO: fallback on the old message manager interface to manage messages.
     this.manager.getMessages()
-        .forEachOrdered((m) -> this.logger.logInfo(m.getMessage()));
+        .forEachOrdered((m) -> this.logger.log(m.getMessage()));
   }
 
   public ChameleonMessageManager getMessageManager() {
@@ -193,7 +206,7 @@ public final class MessageContext implements SharedContextManager.InterfaceProvi
 
   public interface ContextLogger {
     //TODO: This interface is incomplete.
-    void logInfo(String string);
+    void log(String string);
   }
 
   public interface StringLogger {
@@ -241,7 +254,7 @@ public final class MessageContext implements SharedContextManager.InterfaceProvi
     }
 
     @Override
-    public void logInfo(String string) {
+    public void log(String string) {
       logger.log(string);
     }
   }

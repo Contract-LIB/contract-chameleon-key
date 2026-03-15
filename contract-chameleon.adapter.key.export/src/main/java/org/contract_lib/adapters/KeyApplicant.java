@@ -2,11 +2,15 @@ package org.contract_lib.adapters;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.nio.file.Path;
 
 import org.contract_lib.contract_chameleon.Adapter;
-import org.contract_lib.contract_chameleon.adapters.ExportAdapter;
-import org.contract_lib.contract_chameleon.error.ChameleonMessageManager;
+import org.contract_lib.contract_chameleon.adapters.TranslationAdapter;
+import org.contract_lib.contract_chameleon.contexts.ResultDirectoryContext;
+import org.contract_lib.contract_chameleon.contexts.SourcePathsContext;
+import org.contract_lib.contract_chameleon.contexts.ResultDirectoryContext.Dir;
+import org.contract_lib.contract_chameleon.contexts.ResultDirectoryContext.TranslationResult;
 
 import org.contract_lib.lang.contract_lib.ast.ContractLibAst;
 import org.contract_lib.lang.contract_lib.generator.ContractLibGenerator;
@@ -14,30 +18,58 @@ import org.contract_lib.lang.contract_lib.generator.ContractLibGenerator;
 import com.google.auto.service.AutoService;
 
 @AutoService(Adapter.class)
-public final class KeyApplicant extends ExportAdapter {
-
-  public String defaultOutputDir() {
-    return "key-applicant";
-  }
+public final class KeyApplicant extends TranslationAdapter {
 
   public String getAdapterName() {
     return "key-applicant";
   }
 
-  public List<TranslationResult> perform(
-      List<Path> sourceFiles,
-      ChameleonMessageManager messageManager) throws IOException {
+  private ContractLibGenerator generator;
+  private ResultDirectoryContext result;
 
-    //TODO: Support mulitple files
-    System.err.println("This provider supports only one class at the moment.");
-    Path fileName = sourceFiles.get(0);
+  @Override
+  public void performTranslation() {
 
-    ContractLibGenerator generator = new ContractLibGenerator(messageManager);
+    generator = new ContractLibGenerator(getMessageContext().getMessageManager());
+    Optional<SourcePathsContext> sourcesContext = getContext(SourcePathsContext.class);
+    Optional<ResultDirectoryContext> resultContext = getContext(ResultDirectoryContext.class);
+    if (sourcesContext.isEmpty()) {
+      getMessageContext().logError("Source Context required.");
+      return;
+    }
+    if (resultContext.isEmpty()) {
+      getMessageContext().logError("Result Context required.");
+      return;
+    }
+    this.result = resultContext.get();
 
-    ContractLibAst ast = generator.generateFromPath(fileName);
-    SimpleKeyProviderTranslator trans = new SimpleKeyProviderTranslator(messageManager);
-    List<TranslationResult> results = trans.translateContractLibAstApplicant(ast);
+    // generate no subdir if only one source is provided.
+    if (sourcesContext.get().getPaths().size() == 1) {
+      try {
+        ContractLibAst ast = generator.generateFromPath(sourcesContext.get().getPaths().getFirst());
+        SimpleKeyProviderTranslator trans = new SimpleKeyProviderTranslator(getMessageContext().getMessageManager());
+        List<TranslationResult> results = trans.translateContractLibAstApplicant(ast);
+        results.forEach(result.getResultDirectory()::writeResult);
+      } catch (IOException e) {
+        getMessageContext().logException(e);
+      }
+    } else {
+      sourcesContext.get().getPaths().forEach(this::performForPath);
+    }
+  }
 
-    return results;
+  private void performForPath(Path p) {
+    String filename = p.getFileName().toString();
+    Dir finalDir = result.getResultDirectory().addSubDirectories(filename);
+
+    try {
+      ContractLibAst ast = generator.generateFromPath(p);
+      SimpleKeyProviderTranslator trans = new SimpleKeyProviderTranslator(getMessageContext().getMessageManager());
+      List<TranslationResult> results = trans.translateContractLibAstApplicant(ast);
+      results.forEach(finalDir::writeResult);
+    } catch (IOException e) {
+      getMessageContext().logException(e);
+    }
+
   }
 }

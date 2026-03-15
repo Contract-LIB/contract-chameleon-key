@@ -1,9 +1,6 @@
 
 package org.contract_lib.context_providers;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
 import org.contract_lib.contract_chameleon.SharedContextManager;
 import org.contract_lib.contract_chameleon.contexts.ResultDirectoryContext;
 
@@ -16,8 +13,12 @@ public class ResultDirectoryContextProvider
   }
 
   @Option(names = { "-o", "--out", "--output", "--result" }, description = {
-      "Set a custom path for the result directory." })
-  String directoryPath;
+      "Set a custom path for the result directory%n(default: \"./${COMMAND-NAME}\")." })
+  private String directoryPath;
+
+  @Option(names = { "-m",
+      "--mode" }, description = "Set the override mode for the written files.%nValid values: ${COMPLETION-CANDIDATES}%n(default: ${DEFAULT-VALUE}).", defaultValue = "NO_OVERRIDE")
+  private ResultDirectoryContext.OverrideMode overrideMode;
 
   @Override
   public Class<ResultDirectoryContext> getContext() {
@@ -26,12 +27,6 @@ public class ResultDirectoryContextProvider
 
   @Override
   public ResultDirectoryContext createContext(SharedContextManager sharedContextManager) {
-    if (directoryPath == null) {
-      return new ResultDirectoryContext();
-    }
-
-    Path rootPath = Paths.get(directoryPath);
-
-    return new ResultDirectoryContext(rootPath);
+    return new ResultDirectoryContext(sharedContextManager, directoryPath, overrideMode);
   }
 }

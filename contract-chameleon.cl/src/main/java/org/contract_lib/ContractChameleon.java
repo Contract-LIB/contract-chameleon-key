@@ -58,7 +58,7 @@ class ContractChameleon {
     cc.adapterMap
         .sortedElements()
         .forEach((e) -> {
-          CommandLine cSub = new CommandLine(new AdapterCommand(e.getValue()));
+          CommandLine cSub = new CommandLine(new AdapterCommand(e.getValue(), cc.contextManager));
 
           e.getValue()
               .argumentContextsFromInterface()
@@ -76,6 +76,11 @@ class ContractChameleon {
 
           cl.addSubcommand(e.getKey(), cSub);
         });
+
+    String classpath = String.format("Classpath: %s", System.getProperty("java.class.path"));
+    String userDir = String.format("User Dir: %s", System.getProperty("user.dir"));
+    cc.contextManager.getMessageContext().logInfo(classpath);
+    cc.contextManager.getMessageContext().logInfo(userDir);
 
     // Execute the command (esp. the selected adapter).
     int res = cl.execute(args);
