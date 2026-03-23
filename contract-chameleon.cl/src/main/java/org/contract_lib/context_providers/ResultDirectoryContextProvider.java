@@ -17,7 +17,7 @@ public class ResultDirectoryContextProvider
   private String directoryPath;
 
   @Option(names = { "-m",
-      "--mode" }, description = "Set the override mode for the written files.%nValid values: ${COMPLETION-CANDIDATES}%n(default: ${DEFAULT-VALUE}).", defaultValue = "NO_OVERRIDE")
+      "--mode" }, description = "Set the overwrite mode for the written files.%nValid values: ${COMPLETION-CANDIDATES}%n(default: ${DEFAULT-VALUE}).", defaultValue = "NO_OVERWRITE")
   private ResultDirectoryContext.OverrideMode overrideMode;
 
   @Override

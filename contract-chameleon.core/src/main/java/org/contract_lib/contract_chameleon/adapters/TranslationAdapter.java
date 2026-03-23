@@ -1,9 +1,11 @@
 package org.contract_lib.contract_chameleon.adapters;
 
 import java.util.List;
+import java.util.Set;
 
 import org.contract_lib.contract_chameleon.Adapter;
 import org.contract_lib.contract_chameleon.SharedContextManager.InterfaceProvidedContext;
+import org.contract_lib.contract_chameleon.contexts.LogLevelContext;
 import org.contract_lib.contract_chameleon.contexts.ResultDirectoryContext;
 import org.contract_lib.contract_chameleon.contexts.SourcePathsContext;
 
@@ -25,10 +27,11 @@ public abstract class TranslationAdapter extends Adapter {
   }
 
   @Override
-  public List<Class<? extends InterfaceProvidedContext>> argumentContextsFromInterface() {
-    return List.of(
+  public Set<Class<? extends InterfaceProvidedContext>> argumentContextsFromInterface() {
+    return Set.of(
         SourcePathsContext.class,
-        ResultDirectoryContext.class);
+        ResultDirectoryContext.class,
+        LogLevelContext.class);
   }
 
   @Override

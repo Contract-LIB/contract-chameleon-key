@@ -15,8 +15,9 @@ import org.contract_lib.contract_chameleon.SharedContextManager;
  * Those files must only be read,
  * and never changed.
  */
-public class SourcePathsContext
-    implements SharedContextManager.InterfaceProvidedContext, SharedContextManager.MergableContext<SourcePathsContext> {
+public class SourcePathsContext implements
+    SharedContextManager.InterfaceProvidedContext,
+    SharedContextManager.MergableContext<SourcePathsContext> {
 
   /** Given path to a root directory, create a source object from all child objects.
    * 

@@ -39,6 +39,7 @@ public abstract class ImportAdapter extends Adapter {
     //if (args.length > 2) {
     //  System.err.println("Only the first input file is handled at the moment.");
     //}
+    System.err.println("This is an old interface, please change to 'TranslationAdapter'.");
 
     try {
 

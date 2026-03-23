@@ -28,8 +28,8 @@ import org.contract_lib.contract_chameleon.SharedContextManager;
  */
 public class ResultDirectoryContext implements SharedContextManager.InterfaceProvidedContext {
 
-  private static final String CANT_OVERRRIDE_MESSAGE = "File at %s does already exist, change overrride mode to override the file!";
-  private static final String OVERRRIDE_MESSAGE = "File at %s does already exist, will be overridden!";
+  private static final String CANT_OVERWRITE_MESSAGE = "File at %s does already exist, change overrride mode to override the file!";
+  private static final String OVERWRITE_MESSAGE = "File at %s does already exist, will be overridden!";
 
   private final SharedContextManager sharedContextManager;
   private final Optional<String> resultDirectory;
@@ -108,20 +108,20 @@ public class ResultDirectoryContext implements SharedContextManager.InterfacePro
       // Handle overrride mode when file already exists.
       if (Files.exists(path)) {
         switch (overrideMode) {
-          case NO_OVERRIDE -> {
+          case NO_OVERWRITE -> {
             sharedContextManager
                 .getMessageContext()
-                .logError(String.format(CANT_OVERRRIDE_MESSAGE, path));
+                .logError(String.format(CANT_OVERWRITE_MESSAGE, path));
             return;
           }
-          case OVERRIDE_WARN ->
+          case OVERWRITE_WARN ->
             sharedContextManager
                 .getMessageContext()
-                .logWarning(String.format(OVERRRIDE_MESSAGE, path));
-          case OVERRIDE ->
+                .logWarning(String.format(OVERWRITE_MESSAGE, path));
+          case OVERWRITE ->
             sharedContextManager
                 .getMessageContext()
-                .logWarning(String.format(OVERRRIDE_MESSAGE, path));
+                .logWarning(String.format(OVERWRITE_MESSAGE, path));
         }
       }
 
@@ -172,11 +172,11 @@ public class ResultDirectoryContext implements SharedContextManager.InterfacePro
 
   /// Different mode how existing files in the result directory are handled.
   public enum OverrideMode {
-    /// No file is overridden, and if it would be the case an error is produced.
-    NO_OVERRIDE,
-    /// Files are overridden, and if so an waning is produced.
-    OVERRIDE_WARN,
-    /// Files are overridden.
-    OVERRIDE;
+    /// No file is overwritten, and if it would be the case an error is produced.
+    NO_OVERWRITE,
+    /// Files are overwritten, and if so an waning is produced.
+    OVERWRITE_WARN,
+    /// Files are overwritten.
+    OVERWRITE;
   }
 }

@@ -1,6 +1,8 @@
 
 package org.contract_lib.contract_chameleon.contexts;
 
+import java.util.Set;
+
 import org.contract_lib.contract_chameleon.AdapterId;
 import org.contract_lib.contract_chameleon.SharedContextManager;
 import org.contract_lib.contract_chameleon.error.ChameleonException;
@@ -56,16 +58,28 @@ public final class MessageContext implements
   // TODO: Remove dependencies on message manager. Only this class should manage all messages.
   private ChameleonMessageManager manager;
   private ContextLogger logger;
+  private SharedContextManager contextManager;
 
   public MessageContext(
       ContextLogger contextLogger) {
     this.logger = contextLogger;
     this.manager = new ChameleonMessageManager();
+    this.contextManager = null;
   }
 
   public MessageContext(StringLogger stringLogger) {
     this.logger = new ContextToStringLogger(stringLogger);
     this.manager = new ChameleonMessageManager();
+    this.contextManager = null;
+  }
+
+  /// Note: This method must only be called by the shared context manager.
+  public void setSharedContextManager(SharedContextManager contextManager) {
+    if (this.contextManager == null) {
+      this.contextManager = contextManager;
+    } else {
+      logError("The shared context manager was already set for this message context. This should only happen once.");
+    }
   }
 
   /** Log a complete message for a known origin.
@@ -200,6 +214,14 @@ public final class MessageContext implements
         .forEachOrdered((m) -> this.logger.log(m.getMessage()));
   }
 
+  public void filterdLog() {
+    LogLevelContext logLevelContext = this.contextManager.getDefaultContext(LogLevelContext.class);
+
+    this.manager.getMessages()
+        .filter((m) -> filterLogLevel(logLevelContext.getLogLevel(), m))
+        .forEachOrdered((m) -> this.logger.log(m.getMessage()));
+  }
+
   public ChameleonMessageManager getMessageManager() {
     return manager;
   }
@@ -211,6 +233,56 @@ public final class MessageContext implements
 
   public interface StringLogger {
     void log(String string);
+  }
+
+  private boolean filterLogLevel(LogLevel level, ChameleonReportable reportable) {
+    if (reportable instanceof ChameleonFileReportable) {
+      MessageType m = fromMessageType(((ChameleonFileReportable) reportable).messageType());
+      return shouldLogMessage(m, level);
+    }
+    return true;
+  }
+
+  private MessageType fromMessageType(String type) {
+    return switch (type) {
+      case "INFO" -> MessageType.INFO;
+      case "ERROR" -> MessageType.ERROR;
+      default -> MessageType.ERROR;
+    };
+  }
+
+  private Set<MessageType> ONLY_ERROR_MESSAGES = Set.of(
+      MessageType.ERROR,
+      MessageType.EXEPTION);
+  private Set<MessageType> WARN_MESSAGES = Set.of(
+      MessageType.ERROR,
+      MessageType.EXEPTION,
+      MessageType.WARNING);
+  private Set<MessageType> INFO_MESSAGES = Set.of(
+      MessageType.ERROR,
+      MessageType.EXEPTION,
+      MessageType.WARNING,
+      MessageType.INFO);
+  private Set<MessageType> DETAILS_MESSAGES = Set.of(
+      MessageType.ERROR,
+      MessageType.EXEPTION,
+      MessageType.WARNING,
+      MessageType.INFO);
+  private Set<MessageType> DEBUG_MESSAGES = Set.of(
+      MessageType.ERROR,
+      MessageType.EXEPTION,
+      MessageType.WARNING,
+      MessageType.INFO,
+      MessageType.DEBUG);
+
+  private boolean shouldLogMessage(MessageType messageType, LogLevel logLevel) {
+    return switch (logLevel) {
+      case ONLY_ERRORS -> ONLY_ERROR_MESSAGES.contains(messageType);
+      case WARN -> WARN_MESSAGES.contains(messageType);
+      case INFO -> INFO_MESSAGES.contains(messageType);
+      case DETAILS -> DETAILS_MESSAGES.contains(messageType);
+      case DEBUG -> DEBUG_MESSAGES.contains(messageType);
+    };
   }
 
   public enum MessageType {

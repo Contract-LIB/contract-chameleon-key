@@ -1,7 +1,10 @@
 package org.contract_lib;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
+import org.contract_lib.context_providers.LogLevelContextProvider;
 import org.contract_lib.context_providers.ResultDirectoryContextProvider;
 import org.contract_lib.context_providers.SourcePathsContextProvider;
 import org.contract_lib.contract_chameleon.Adapter;
@@ -9,13 +12,18 @@ import org.contract_lib.contract_chameleon.AdapterMap;
 import org.contract_lib.contract_chameleon.SharedContextManager;
 import org.contract_lib.contract_chameleon.SharedContextManager.SharedContextProvider;
 import org.contract_lib.contract_chameleon.adapters.CheckerAdapter;
+import org.contract_lib.contract_chameleon.contexts.LogLevelContext;
 import org.contract_lib.contract_chameleon.contexts.MessageContext;
 import org.contract_lib.contract_chameleon.contexts.MessageContext.StringLogger;
+
 import org.contract_lib.contract_chameleon.SharedContextManager.InterfaceProvidedContext;
+import org.contract_lib.contract_chameleon.SharedContextManager.SharedContext;
+import org.contract_lib.contract_chameleon.SharedContextManager.DefaultContext;
 
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
+import picocli.CommandLine.ParseResult;
 
 @Command(name = "contract-chameleon")
 class ContractChameleon {
@@ -27,7 +35,18 @@ class ContractChameleon {
 
   private static List<SharedContextProvider<? extends InterfaceProvidedContext>> interfaceProvider = List.of(
       new SourcePathsContextProvider(),
-      new ResultDirectoryContextProvider());
+      new ResultDirectoryContextProvider(),
+      new LogLevelContextProvider());
+
+  //The contexts that are added to all commands (adapters)
+  private static final Set<Class<? extends InterfaceProvidedContext>> INTERFACE_PROVIDED_CONTEXTS = Set
+      .of(
+          LogLevelContext.class);
+
+  //The contexts that are created by the interface and therefore ensured to be there
+  private static final Set<Class<? extends DefaultContext>> DEF_PROVIDED_CONTEXTS = Set
+      .of(
+          LogLevelContext.class);
 
   private StringLogger logger = new MessageContext.StringLogger() {
     @Override
@@ -60,8 +79,13 @@ class ContractChameleon {
         .forEach((e) -> {
           CommandLine cSub = new CommandLine(new AdapterCommand(e.getValue(), cc.contextManager));
 
-          e.getValue()
-              .argumentContextsFromInterface()
+          Set<Class<? extends InterfaceProvidedContext>> interfaceProvidedContexts = new HashSet<>();
+          interfaceProvidedContexts.addAll(INTERFACE_PROVIDED_CONTEXTS);
+          interfaceProvidedContexts.addAll(
+              e.getValue()
+                  .argumentContextsFromInterface());
+
+          interfaceProvidedContexts
               .forEach(contexts -> {
                 cc.contextManager
                     .getProvider(contexts)
@@ -83,10 +107,13 @@ class ContractChameleon {
     cc.contextManager.getMessageContext().logInfo(userDir);
 
     // Execute the command (esp. the selected adapter).
+    ParseResult pr = cl.parseArgs(args);
+    cc.contextManager.createDefaultContexts(DEF_PROVIDED_CONTEXTS);
+
     int res = cl.execute(args);
 
     // Log all messages.
-    cc.messageContext.log();
+    cc.messageContext.filterdLog();
 
     // Exit with exit code.
     System.exit(res);

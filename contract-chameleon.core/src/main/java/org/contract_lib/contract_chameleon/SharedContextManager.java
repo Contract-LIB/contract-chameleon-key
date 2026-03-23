@@ -2,6 +2,7 @@ package org.contract_lib.contract_chameleon;
 
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.Set;
 
 import org.contract_lib.contract_chameleon.contexts.MessageContext;
 import org.contract_lib.contract_chameleon.error.ChameleonMessageManager;
@@ -30,6 +31,7 @@ public final class SharedContextManager {
     this.messageContext = messageContext;
     this.messageManager = messageContext.getMessageManager();
     this.contextCache.put(MessageContext.class, this.messageContext);
+    this.messageContext.setSharedContextManager(this);
   }
 
   // The providers that can be used to create a context.
@@ -159,6 +161,13 @@ public final class SharedContextManager {
             .logError(String.format("Could not create context '%s' from provider '%s'.", provider.getClass())));
 
     return context;
+  }
+
+  public void createDefaultContexts(Set<Class<? extends DefaultContext>> defaultContexts) {
+    for (Class dc : defaultContexts) {
+      Optional<SharedContextProvider> sc = this.getProvider(dc);
+      createAndStore(sc.get());
+    }
   }
 
   public interface SharedContext {

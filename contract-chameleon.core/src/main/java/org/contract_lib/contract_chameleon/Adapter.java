@@ -1,7 +1,7 @@
 package org.contract_lib.contract_chameleon;
 
-import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.contract_lib.contract_chameleon.SharedContextManager.SharedContext;
 import org.contract_lib.contract_chameleon.SharedContextManager.SharedContextProvider;
@@ -86,8 +86,8 @@ public abstract class Adapter implements AdapterId, SharedContextProvider<Adapte
    * The interface can then decide,
    * if it requires user input or provides a default context where possible.
    */
-  public List<Class<? extends InterfaceProvidedContext>> argumentContextsFromInterface() {
-    return List.of();
+  public Set<Class<? extends InterfaceProvidedContext>> argumentContextsFromInterface() {
+    return Set.of();
   }
 
   @Override

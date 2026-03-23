@@ -1,7 +1,7 @@
 
 package org.contract_lib.contract_chameleon.adapters;
 
-import java.util.List;
+import java.util.Set;
 
 import org.contract_lib.contract_chameleon.Adapter;
 import org.contract_lib.contract_chameleon.SharedContextManager;
@@ -38,8 +38,8 @@ public abstract class CheckerAdapter extends Adapter {
   }
 
   @Override
-  public List<Class<? extends InterfaceProvidedContext>> argumentContextsFromInterface() {
-    return List.of(
+  public Set<Class<? extends InterfaceProvidedContext>> argumentContextsFromInterface() {
+    return Set.of(
         SourcePathsContext.class);
   }
 

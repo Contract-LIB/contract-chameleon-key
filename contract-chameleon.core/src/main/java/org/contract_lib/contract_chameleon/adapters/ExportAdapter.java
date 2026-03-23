@@ -2,7 +2,6 @@
 package org.contract_lib.contract_chameleon.adapters;
 
 import java.util.List;
-
 import java.io.Writer;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -11,9 +10,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import org.contract_lib.contract_chameleon.Adapter;
-import org.contract_lib.contract_chameleon.SharedContextManager.InterfaceProvidedContext;
-import org.contract_lib.contract_chameleon.contexts.ResultDirectoryContext;
-import org.contract_lib.contract_chameleon.contexts.SourcePathsContext;
 import org.contract_lib.contract_chameleon.error.ChameleonException;
 import org.contract_lib.contract_chameleon.error.ChameleonMessageManager;
 
@@ -23,13 +19,6 @@ public abstract class ExportAdapter extends Adapter {
   public abstract List<TranslationResult> perform(
       List<Path> sourceFiles,
       ChameleonMessageManager messageManager) throws IOException;
-
-  @Override
-  public List<Class<? extends InterfaceProvidedContext>> argumentContextsFromInterface() {
-    return List.of(
-        SourcePathsContext.class,
-        ResultDirectoryContext.class);
-  }
 
   //public abstract String adapterTitle();
   public abstract String defaultOutputDir();
@@ -57,6 +46,7 @@ public abstract class ExportAdapter extends Adapter {
     //if (args.length > 2) {
     //  System.err.println("Only the first input file is handled at the moment.");
     //}
+    System.err.println("This is an old interface, please change to 'TranslationAdapter'.");
 
     try {
       List<TranslationResult> results = this.perform(List.of(Paths.get(inputFileName)), messageManager);
