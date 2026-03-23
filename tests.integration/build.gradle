@@ -24,7 +24,7 @@ def runIntegrationTest(String taskName, List<String> argList) {
     }
     ext.integrationTasks << taskName
 }
-def mode = "OVERRIDE"
+def mode = "OVERWRITE"
 
 // - Integration test specifications
 
