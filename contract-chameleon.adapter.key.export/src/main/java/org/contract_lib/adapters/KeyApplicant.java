@@ -25,8 +25,8 @@ public final class KeyApplicant extends ExportAdapter {
   public final void performForPath(Path p, Dir finalDir) {
     try {
       ContractLibGenerator generator = new ContractLibGenerator(getMessageContext().getMessageManager());
-      ContractLibAst ast = generator.generateFromPath(p);
       SimpleKeyProviderTranslator trans = new SimpleKeyProviderTranslator(getMessageContext().getMessageManager());
+      ContractLibAst ast = generator.generateFromPath(p);
       List<TranslationResult> results = trans.translateContractLibAstApplicant(ast);
       results.forEach(finalDir::writeResult);
     } catch (IOException e) {

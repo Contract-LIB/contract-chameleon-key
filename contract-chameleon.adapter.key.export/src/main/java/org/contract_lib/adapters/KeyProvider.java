@@ -28,6 +28,7 @@ public final class KeyProvider extends ExportAdapter {
       ContractLibAst ast = generator.generateFromPath(p);
       trans.translateContractLibAstProvider(ast)
           .forEach(finalDir::writeResult);
+
     } catch (IOException e) {
       getMessageContext().logException(e);
     }

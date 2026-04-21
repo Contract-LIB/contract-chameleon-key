@@ -47,4 +47,5 @@ public abstract class ExportAdapter extends TranslationAdapter {
    * @param finalDir the directory where the results should be written.
    */
   public abstract void performForPath(Path p, Dir finalDir);
+
 }
