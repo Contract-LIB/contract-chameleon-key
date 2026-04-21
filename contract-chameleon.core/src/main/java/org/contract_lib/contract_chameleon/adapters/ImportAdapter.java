@@ -13,6 +13,8 @@ import java.nio.file.Paths;
 import org.contract_lib.contract_chameleon.Adapter;
 import org.contract_lib.contract_chameleon.error.ChameleonMessageManager;
 
+// Note: Lecacy file, don't use!
+@Deprecated
 public abstract class ImportAdapter extends Adapter {
 
   public abstract List<TranslationResult> perform(
