@@ -317,24 +317,6 @@ public class SimpleKeyProviderTranslator {
   }
 
   protected void addAccessibleDef(ClassOrInterfaceDeclaration dec, List<SelectorDec> selector) {
-<<<<<<< HEAD
-=======
-    /*
-    // The footprint invariant may only depend on itself
-    JmlClassAccessibleDeclaration accessFootprint = new JmlClassAccessibleDeclaration(
-        NodeList.nodeList(),
-        NodeList.nodeList(),
-        new NameExpr(new SimpleName("footprint")),
-        NodeList.nodeList(
-            new FieldAccessExpr(new ThisExpr(), NodeList.nodeList(), new SimpleName("footprint"))),
-        null //Measured by
-    )
-        .addModifier(Modifier.DefaultKeyword.PUBLIC)
-        .addModifier(Modifier.DefaultKeyword.JML_INSTANCE);
-    
-    dec.addMember(accessFootprint);
-    */
->>>>>>> 012b8ba (some refactoring)
 
     // All invariants have to relay on footprint
     JmlClassAccessibleDeclaration accessInv = new JmlClassAccessibleDeclaration(
@@ -610,6 +592,43 @@ public class SimpleKeyProviderTranslator {
     return assignable;
   }
 
+  protected Optional<JmlClause> newElementsFreshClause(
+      List<Formal> formals,
+      VariableTranslator variableScope) {
+
+    List<Expression> changeableFootprint = formals.stream()
+        .filter((f) -> isReference(f, variableScope))
+        .filter((f) -> isAssignable(f.argumentMode()))
+        .map(Formal::identifier)
+        .map(variableScope::translate)
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .map(VariableScope::getJmlTerm)
+        .toList();
+
+    if (changeableFootprint.isEmpty()) {
+      return Optional.empty();
+    }
+
+    return Optional.of(new JmlSimpleExprClause(ENSURES,
+        null,
+        NodeList.nodeList(),
+        new MethodCallExpr(null, new SimpleName("\\new_elems_fresh"),
+            NodeList.nodeList(createUnionClause(changeableFootprint)))));
+  }
+
+  //NOTE: requries at leas one element
+  private Expression createUnionClause(List<Expression> expressions) {
+    if (expressions.size() == 1) {
+      return new FieldAccessExpr(expressions.getFirst(), FOOTPRINT_NAME);
+    }
+    Expression first = expressions.removeFirst();
+    return new MethodCallExpr(null, new SimpleName("\\union"),
+        NodeList.nodeList(
+            new FieldAccessExpr(first, FOOTPRINT_NAME),
+            createUnionClause(expressions)));
+  }
+
   protected List<JmlClause> disjointClauses(
       JmlClauseKind kind,
       List<Formal> formals,
@@ -645,48 +664,11 @@ public class SimpleKeyProviderTranslator {
     return res;
   }
 
-  private Optional<JmlClause> newElementsFreshClause(
-      List<Formal> formals,
-      VariableTranslator variableScope) {
-
-    List<Expression> changeableFootprint = formals.stream()
-        .filter((f) -> isReference(f, variableScope))
-        .filter((f) -> isAssignable(f.argumentMode()))
-        .map(Formal::identifier)
-        .map(variableScope::translate)
-        .filter(Optional::isPresent)
-        .map(Optional::get)
-        .map(VariableScope::getJmlTerm)
-        .toList();
-
-    if (changeableFootprint.isEmpty()) {
-      return Optional.empty();
-    }
-
-    return Optional.of(new JmlSimpleExprClause(ENSURES,
-        null,
-        NodeList.nodeList(),
-        new MethodCallExpr(null, new SimpleName("\\new_elems_fresh"),
-            NodeList.nodeList(createUnionClause(changeableFootprint)))));
-  }
-
   private MethodCallExpr createDisjointClause(Expression a, Expression b) {
     return new MethodCallExpr(null, new SimpleName("\\disjoint"),
         NodeList.nodeList(
             new FieldAccessExpr(a, FOOTPRINT_NAME),
             new FieldAccessExpr(b, FOOTPRINT_NAME)));
-  }
-
-  //NOTE: requries at leas one element
-  private Expression createUnionClause(List<Expression> expressions) {
-    if (expressions.size() == 1) {
-      return new FieldAccessExpr(expressions.getFirst(), FOOTPRINT_NAME);
-    }
-    Expression first = expressions.removeFirst();
-    return new MethodCallExpr(null, new SimpleName("\\union"),
-        NodeList.nodeList(
-            new FieldAccessExpr(first, FOOTPRINT_NAME),
-            createUnionClause(expressions)));
   }
 
   protected Optional<List<JmlClause>> objectCreated(List<Formal> formals, VariableTranslator variableScope) {
