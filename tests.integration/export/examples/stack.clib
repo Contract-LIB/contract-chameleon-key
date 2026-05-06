@@ -1,8 +1,0 @@
-(declare-abstractions
-  (
-    (example3.Stack 0)
-  )
-  ((
-     (Stack (absVal (Seq Int)) (test (Seq (Seq BoundInt))))
-  ))
-)

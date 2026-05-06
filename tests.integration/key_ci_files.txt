@@ -1,4 +1,0 @@
-import-from-key/examples/_counter/
-import-from-key/examples/_stack/
-import-from-key/theories/
-import-from-key/features/
