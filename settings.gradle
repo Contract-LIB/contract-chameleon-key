@@ -4,28 +4,11 @@ plugins {
 
 rootProject.name = 'contract-chameleon'
 
-// Base Packages
-include('contract-chameleon.core')
 // - Language packages
-include('contract-chameleon.lang.contract_lib')
 include('contract-chameleon.lang.jml')
 include('contract-chameleon.lang.key')
-include('contract-chameleon.lang.verifast')
 
-// Tool Packages
-// - language
-include('contract-chameleon.lang.contract_lib.tools')
-
-// Connector Packages
 
 // - Adapter packages
 include('contract-chameleon.adapter.key.export')
-include('contract-chameleon.adapter.verifast.export')
 include('contract-chameleon.adapter.key.import')
-
-// - UI Packages
-include('contract-chameleon.cl')
-
-
-// - Integration Tests
-include('tests.integration')

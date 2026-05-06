@@ -1,6 +1,0 @@
-
-(declare-sort TestSortA 0) 
-(declare-sort TestSortB 1) 
-(declare-sort TestSortC 2) 
-
-(declare-sort TestSortD 9999999999) ;TODO: Test if this would be valid
