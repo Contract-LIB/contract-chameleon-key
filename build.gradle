@@ -21,15 +21,10 @@ distZip {
 }
 
 dependencies {
-  runtimeOnly project(":contract-chameleon.cl")
-
-  // How to add adapters from different repositories to the build
-  //runtimeOnly 'org.tool:adapter-extension:1.0.0-SNAPSHOT'
-  //runtimeOnly 'org.tool.b:adapter-extension-b:1.0.0-SNAPSHOT'
+  runtimeOnly 'org.contract_lib:contract-chameleon:1.0.0-SNAPSHOT'
   
   // adapters from this repository
   runtimeOnly project(":contract-chameleon.adapter.key.export")
-  runtimeOnly project(":contract-chameleon.adapter.verifast.export")
   runtimeOnly project(":contract-chameleon.adapter.key.import")
 }
 
@@ -64,9 +59,12 @@ shadowJar {
   }
 }
 
-task lightShadowJar(type: com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
+shadowJar.dependsOn jar
+assemble.dependsOn shadowJar 
 
-  description = "Create a combined JAR of project and runtime dependencies without the adapters"
+task keyAdapters(type: com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
+
+  description = "Create combined JAR with only the KeY adapters."
 
   // Procedure to merge the service files
   duplicatesStrategy = DuplicatesStrategy.EXCLUDE // Or FAIL.
@@ -75,25 +73,24 @@ task lightShadowJar(type: com.github.jengelman.gradle.plugins.shadow.tasks.Shado
     duplicatesStrategy = DuplicatesStrategy.INCLUDE // Or WARN.
   }
 
-  archiveClassifier.set("light")
+  archiveClassifier.set("key-adapters")
   configurations = project.configurations.named('runtimeClasspath').map { [it] }
 
   manifest.from tasks.jar.manifest
   dependencies {
-    exclude(project(":contract-chameleon.adapter.key.export"))
-    exclude(project(":contract-chameleon.adapter.key.import"))
-    exclude(project(":contract-chameleon.adapter.verifast.export"))
+    exclude('org.contract_lib:contract-chameleon')
   }
 }
 
-assemble.dependsOn lightShadowJar 
+keyAdapters.dependsOn jar
+assemble.dependsOn keyAdapters 
 
 publishing {
   publications {
     shadow(MavenPublication) {
       from components.shadow
 
-      artifact(lightShadowJar)
+      artifact(keyAdapters)
     }
   }
 }

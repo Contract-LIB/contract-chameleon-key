@@ -10,3 +10,7 @@
 [submodule "libs/verifast"]
 	path = libs/verifast
 	url = git@github.com:verifast/verifast.git
+[submodule "libs/contract-chameleon"]
+	path = libs/contract-chameleon
+	url = git@github.com:Contract-LIB/contract-chameleon.git
+	branch = robert/externalize-key-adapters

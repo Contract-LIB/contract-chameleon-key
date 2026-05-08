@@ -2,7 +2,7 @@ plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 
-rootProject.name = 'contract-chameleon'
+rootProject.name = 'contract-chameleon-key-adapters'
 
 // - Language packages
 include('contract-chameleon.lang.jml')

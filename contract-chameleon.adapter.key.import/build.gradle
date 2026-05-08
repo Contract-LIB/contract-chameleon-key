@@ -18,11 +18,17 @@ dependencies {
     compileOnly 'com.google.auto.service:auto-service:1.1.1'
     annotationProcessor 'com.google.auto.service:auto-service:1.1.1'
 
-    implementation project(":contract-chameleon.core")
-    implementation project(":contract-chameleon.lang.contract_lib")
-    implementation project(":contract-chameleon.lang.key")
-    implementation project(":contract-chameleon.lang.contract_lib.tools")
+/*
+    api 'org.contract_lib.contract-chameleon:contract-chameleon.core:1.0.0-SNAPSHOT'
+    api 'org.contract_lib.contract-chameleon:contract-chameleon.lang.contract_lib:1.0.0-SNAPSHOT'
+    api 'org.contract_lib.contract-chameleon:contract-chameleon.lang.contract_lib:1.0.0-SNAPSHOT'
+    api 'org.contract_lib.contract-chameleon:contract-chameleon.lang.contract_lib.tools:1.0.0-SNAPSHOT'
+    */
 
+
+    implementation 'org.contract_lib:contract-chameleon:1.0.0-SNAPSHOT'
+
+    implementation project(":contract-chameleon.lang.key")
     implementation project(":contract-chameleon.lang.jml")
 
     // Use JUnit Jupiter for testing.
