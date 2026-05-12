@@ -20,6 +20,7 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.Modifier;
 import com.github.javaparser.ast.Node;
+import com.github.javaparser.ast.body.CallableDeclaration;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
@@ -185,6 +186,9 @@ public class SimpleKeyProviderTranslator {
     return new SimpleName(selector.symbol().identifier());
   }
 
+  protected void annotateMethodDecl(CallableDeclaration<?> decl) {
+  }
+
   private boolean abstractionBuilder(
       Abstraction abstraction,
       ClassOrInterfaceDeclaration dec) {
@@ -316,6 +320,9 @@ public class SimpleKeyProviderTranslator {
     dec.addMember(footprintInv);
   }
 
+  protected void annotateClassOrInterfaceDecl(ClassOrInterfaceDeclaration decl) {
+  }
+
   protected void addAccessibleDef(ClassOrInterfaceDeclaration dec, List<SelectorDec> selector) {
 
     // All invariants have to relay on footprint
@@ -363,6 +370,7 @@ public class SimpleKeyProviderTranslator {
         .addClass(className)
         .setPublic(true)
         .setAbstract(true);
+    annotateClassOrInterfaceDecl(abstractClassDeclaration);
 
     if (!abstractionBuilder(abstraction, abstractClassDeclaration)) {
       System.err.println("Abort abstraction translation.");
@@ -394,6 +402,7 @@ public class SimpleKeyProviderTranslator {
         .addClass(className + IMPLEMENTATION_SUFFIX)
         .setPublic(true)
         .addExtendedType(parentType);
+    annotateClassOrInterfaceDecl(classImpl);
 
     addImplementationFootprint(classImpl, abstraction);
 
@@ -703,9 +712,8 @@ public class SimpleKeyProviderTranslator {
 
     //TODO: Check that owner matches
     Optional<Type> ownerType = variableScope.ownerType;
-    Type returnType = getReturnT(
-        methodSignaturExtractor.isStatic(),
-        variableScope);
+
+    Type returnType = getReturnT(methodSignaturExtractor.isStatic(), variableScope);
 
     List<ExpressionPair> clausePairs = contract.pairs()
         .stream()
@@ -745,11 +753,11 @@ public class SimpleKeyProviderTranslator {
     objectCreated(contract.formals(), variableScope).ifPresent(clauses::addAll);
     //allows all parameters that are `INOUT`, to have new objects created in their footprint
     newElementsFreshClause(contract.formals(), variableScope).ifPresent(clauses::add);
-    clauses.addAll(accessibleClause);
+    clauses.addAll(assignableClause);
 
-    // only add assignableClause when there is a return type
+    // only add accessibleClause when there is a return type
     if (variableScope.returnType.isPresent()) {
-      clauses.addAll(assignableClause);
+      clauses.addAll(accessibleClause);
     }
 
     JmlContract jmlContract = new JmlContract()
@@ -767,8 +775,7 @@ public class SimpleKeyProviderTranslator {
     }
 
     ClassOrInterfaceDeclaration classImpl = abstractionImpementations.get(classIdentifier);
-
-    List<Parameter> parameters = getParameters(variableScope);
+    var parameters = getParameters(variableScope);
 
     if (methodSignaturExtractor.isStatic()) {
       System.err.println("Static constructor method found");
@@ -786,10 +793,11 @@ public class SimpleKeyProviderTranslator {
 
         NodeList<Statement> nl = NodeList.nodeList(em);
         BlockStmt body = new BlockStmt(nl);
-        classImpl.addConstructor()
+        CallableDeclaration<?> constructorDecl = classImpl.addConstructor()
             .setParameters(NodeList.nodeList(parameters))
             .setBody(body)
             .setContracts(contracts);
+        annotateMethodDecl(constructorDecl);
 
         ObjectCreationExpr obc = new ObjectCreationExpr(
             null,
@@ -800,7 +808,7 @@ public class SimpleKeyProviderTranslator {
       NodeList<Statement> nl = NodeList.nodeList(returnStmt);
       BlockStmt body = new BlockStmt(nl);
 
-      MethodDeclaration methodDeclAbstr = abstractClassDeclaration
+      CallableDeclaration<?> methodDeclAbstr = abstractClassDeclaration
           .addMethod(methodIdentifier)
           .setBody(body)
           .setType(returnType)
@@ -808,9 +816,9 @@ public class SimpleKeyProviderTranslator {
           .setPublic(true)
           .setStatic(true)
           .setContracts(contracts);
-
+      annotateMethodDecl(methodDeclAbstr);
     } else {
-      MethodDeclaration methodDeclAbstr = abstractClassDeclaration
+      CallableDeclaration<?> methodDeclAbstr = abstractClassDeclaration
           .addMethod(methodIdentifier)
           .setBody(null)
           .setType(returnType)
@@ -818,6 +826,7 @@ public class SimpleKeyProviderTranslator {
           .setPublic(true)
           .setAbstract(true)
           .setContracts(contracts);
+      annotateMethodDecl(methodDeclAbstr);
 
       //TODO: set default value when return type != void
       Statement returnStmt = new ReturnStmt();
@@ -828,12 +837,13 @@ public class SimpleKeyProviderTranslator {
       BlockStmt blueprintStatement = new BlockStmt(nl);
 
       if (classImpl != null) {
-        MethodDeclaration methodDeclImpl = classImpl
+        CallableDeclaration<?> methodDeclImpl = classImpl
             .addMethod(methodIdentifier)
             .setType(returnType)
             .setParameters(NodeList.nodeList(parameters))
             .setBody(blueprintStatement)
             .setPublic(true);
+        annotateMethodDecl(methodDeclImpl);
       }
     }
   }
