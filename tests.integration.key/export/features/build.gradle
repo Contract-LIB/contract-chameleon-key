@@ -1,0 +1,11 @@
+// List to store all creatd tasks
+def tests = []
+
+
+// - Full run
+tasks.register('it-features-key') {
+    group = "Integration Tests"
+    description = "Run all task of examples integration tests"
+
+    dependsOn tests 
+}

@@ -1,0 +1,25 @@
+(declare-abstractions
+  (
+    (example2.Counter 0)
+  )
+  (
+    ((Counter (absVal Int) (test Bool)))
+  )
+)
+
+(declare-abstractions
+  (
+    (example2.Wrapper 0)
+  )
+  (
+    ((Counter
+      (defCounter Counter)
+      (intCounter Int)
+      (bountIntCounter BoundInt)
+      (counterList (Seq Counter))
+      (intList (Seq Int))
+      (doubleCounterList (Seq (Seq Counter)))
+      (doubleIntList (Seq (Seq Int)))
+    ))
+  )
+)

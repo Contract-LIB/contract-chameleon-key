@@ -1,0 +1,149 @@
+
+; - Abstraction definitions
+; Example Opject
+(declare-abstractions
+  (
+    (example_test_core.BooleanWrapper 0)
+  )
+  (
+    ((Wrapper (a Bool) (b Bool) (c Bool)))
+  )
+)
+
+; - Initializers
+(define-contract example_test_core.BooleanWrapper.init
+  (
+   (result (out BooleanWrapper))
+   )
+  ((
+    true
+    (and 
+      (= (a result) true)
+      (= (b result) true)
+      (= (c result) true)
+    )
+  ))
+)
+
+; - Initializers
+(define-contract example_test_core.BooleanWrapper.init_values
+  (
+   (result (out BooleanWrapper))
+   (x (in Bool))
+   (y (in Bool))
+   (z (in Bool))
+   )
+  ((
+    true
+    (and 
+      (= (a result) x)
+      (and 
+        (= (b result) y)
+        (= (c result) z)
+      )
+    )
+  ))
+)
+
+; - Getter contracts
+(define-contract example_test_core.BooleanWrapper.get_a
+  (
+    (this (in BooleanWrapper))
+    (result (out Bool))
+  )
+  ((
+    true
+    (= (a this) result)
+  ))
+)
+
+; - Operatiors contracts
+(define-contract example_test_core.BooleanWrapper.check_equals
+  (
+    (this (in BooleanWrapper))
+    (result (out Bool))
+  )
+  ((
+    true 
+    (= (= (a this) (b this)) result)
+  ))
+)
+
+(define-contract example_test_core.BooleanWrapper.check_distinct
+  (
+    (this (in BooleanWrapper))
+    (result (out Bool))
+  )
+  ((
+    true 
+    (= (distinct (a this) (b this)) result)
+  ))
+)
+
+(define-contract example_test_core.BooleanWrapper.check_not
+  (
+    (this (in BooleanWrapper))
+    (result (out Bool))
+  )
+  ((
+    true 
+    (= (not (a this)) result)
+  ))
+)
+
+(define-contract example_test_core.BooleanWrapper.check_implies
+  (
+    (this (in BooleanWrapper))
+    (result (out Bool))
+  )
+  ((
+    true 
+    (= (=> (a this) (b this)) result)
+  ))
+)
+
+(define-contract example_test_core.BooleanWrapper.check_and
+  (
+    (this (in BooleanWrapper))
+    (result (out Bool))
+  )
+  ((
+    true 
+    (= (and (a this) (b this)) result)
+  ))
+)
+
+(define-contract example_test_core.BooleanWrapper.check_or
+  (
+    (this (in BooleanWrapper))
+    (result (out Bool))
+  )
+  ((
+    true 
+    (= (or (a this) (b this)) result)
+  ))
+)
+
+(define-contract example_test_core.BooleanWrapper.check_xor
+  (
+    (this (in BooleanWrapper))
+    (result (out Bool))
+  )
+  ((
+    true
+    (= (xor (a this) (b this)) result)
+  ))
+)
+
+(define-contract example_test_core.BooleanWrapper.check_ite
+  (
+    (x (in Bool))
+    (y (in Bool))
+    (this (in BooleanWrapper))
+    (result (out Bool))
+ )
+ ((
+   true
+   (= (ite (a this) x y) result)
+ ))
+)

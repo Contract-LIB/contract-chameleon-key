@@ -1,0 +1,12 @@
+
+// List to store all creatd tasks
+def encapsulaiton_tests = []
+
+
+// Full run
+tasks.register('it-encapsulation-example-key') {
+    group = "Integration Tests"
+    description = "Run all task of the encapsulaiton example"
+
+    dependsOn encapsulaiton_tests
+}

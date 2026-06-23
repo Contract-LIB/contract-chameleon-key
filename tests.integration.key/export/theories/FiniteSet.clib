@@ -1,0 +1,147 @@
+(declare-abstractions
+  (
+    (example_test_set.SetWrapper 0)
+  )
+  (
+    ((Wrapper (a (Set Int)) (b (Set Int)) (c (Set Int))))
+  )
+)
+
+; - Initializers
+(define-contract example_test_set.SetWrapper.init
+  (
+   (result (out SetWrapper))
+   )
+  ((
+    true
+    (and 
+      (= (a result) set.empty)
+      (= (b result) set.empty)
+      (= (c result) set.empty)
+    )
+  ))
+)
+
+; - Initializers
+(define-contract example_test_set.SetWrapper.initValue
+  (
+   (a (in Int))
+   (b (in Int))
+   (c (in Int))
+   (result (out SetWrapper))
+   )
+  ((
+    true
+    (and 
+      (= (a result) (set.singleton a))
+      (= (b result) (set.singleton b))
+      (= (c result) (set.singleton c))
+    )
+  ))
+)
+
+(define-contract example_test_set.SetWrapper.union
+  (
+   (this (inout SetWrapper))
+   (setB (in SetWrapper))
+   )
+  ((
+    true
+    (and 
+      (= (a this) (set.union (old (a this)) (a setB)))
+      (= (b this) (set.union (old (b this)) (b setB)))
+      (= (c this) (set.union (old (c this)) (c setB)))
+    )
+  ))
+)
+
+(define-contract example_test_set.SetWrapper.inter
+  (
+   (this (inout SetWrapper))
+   (setB (in SetWrapper))
+   )
+  ((
+    true
+    (and 
+      (= (a this) (set.inter (old (a this)) (a setB)))
+      (= (b this) (set.inter (old (b this)) (b setB)))
+      (= (c this) (set.inter (old (c this)) (c setB)))
+    )
+  ))
+)
+
+
+(define-contract example_test_set.SetWrapper.minus
+  (
+   (this (inout SetWrapper))
+   (setB (in SetWrapper))
+   )
+  ((
+    true
+    (and 
+      (= (a this) (set.minus (old (a this)) (a setB)))
+      (= (b this) (set.minus (old (b this)) (b setB)))
+      (= (c this) (set.minus (old (c this)) (c setB)))
+    )
+  ))
+)
+
+(define-contract example_test_set.SetWrapper.member
+  (
+   (this (inout SetWrapper))
+   (value (in Int))
+   )
+  ((
+    true
+    (and 
+      (= (a this) (set.member (old (a this)) value))
+      (= (b this) (set.member (old (b this)) value))
+      (= (c this) (set.member (old (c this)) value))
+    )
+  ))
+)
+
+(define-contract example_test_set.SetWrapper.subset
+  (
+   (this (inout SetWrapper))
+   (setB (in SetWrapper))
+   )
+  ((
+    true
+    (and 
+      (set.subset (a this) (a setB))
+      (set.subset (b this) (b setB))
+      (set.subset (c this) (c setB))
+    )
+  ))
+)
+
+(define-contract example_test_set.SetWrapper.disjunct
+  (
+   (this (inout SetWrapper))
+   (setB (in SetWrapper))
+   )
+  ((
+    true
+    (and 
+      (set.disjunct (a this) (a setB))
+      (set.disjunct (b this) (b setB))
+      (set.disjunct (c this) (c setB))
+    )
+  ))
+)
+
+(define-contract example_test_set.SetWrapper.card
+  (
+   (this (inout SetWrapper))
+   )
+  ((
+    true
+    (and 
+      (= (set.card (a this)) 2)
+      (= (set.card (b this)) 1)
+      (= (set.card (c this)) 0)
+    )
+  ))
+)
+

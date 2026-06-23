@@ -1,0 +1,173 @@
+(declare-abstractions
+  (
+    (example_test_seq.SeqWrapper 0)
+  )
+  (
+    ((Wrapper (a (Seq Bool)) (b (Seq Bool)) (c (Seq Int))))
+  )
+)
+
+; - Initializers
+(define-contract example_test_seq.SeqWrapper.init
+  (
+   (result (out SeqWrapper))
+   )
+  ((
+    true
+    (and 
+      (= (a result) seq.empty)
+      (= (b result) seq.empty)
+      (= (c result) seq.empty)
+    )
+  ))
+)
+
+; - Initializer Values
+(define-contract example_test_seq.SeqWrapper.initValues
+  (
+   (this (in SeqWrapper))
+   (result (out SeqWrapper))
+   )
+  ((
+    true
+    (and 
+      (= (a result) (a this))
+      (= (b result) (b this))
+      (= (c result) (c this))
+    )
+  ))
+)
+
+(define-contract example_test_seq.SeqWrapper.initUnit
+  (
+   (x (in Bool))
+   (y (in Bool))
+   (z (in Bool))
+   (result (out SeqWrapper))
+   )
+  ((
+    true
+    (and 
+      (= (a result) (seq.unit x))
+      (= (b result) (seq.unit y))
+      (= (c result) (seq.unit z))
+    )
+  ))
+)
+
+(define-contract example_test_seq.SeqWrapper.eqAt
+  (
+   (i (in Int))
+   (this (in SeqWrapper))
+   (sw (in SeqWrapper))
+   )
+  ((
+    true
+    (and 
+      (= (seq.at (a this) i) (seq.at (a sw) i))
+      (= (seq.at (b this) i) (seq.at (b sw) i))
+      (= (seq.at (c this) i) (seq.at (c sw) i))
+    )
+  ))
+)
+
+(define-contract example_test_seq.SeqWrapper.eqExtract
+  (
+   (i (in Int))
+   (j (in Int))
+   (this (in SeqWrapper))
+   (sw (in SeqWrapper))
+   )
+  ((
+    true
+    (and 
+      (= (seq.extract (a this) i j) (seq.extract (a sw) i j))
+      (= (seq.extract (b this) i j) (seq.extract (b sw) i j))
+      (= (seq.extract (c this) i j) (seq.extract (c sw) i j))
+    )
+  ))
+)
+
+(define-contract example_test_seq.SeqWrapper.eqLen
+  (
+   (this (in SeqWrapper))
+   (sw (in SeqWrapper))
+   )
+  ((
+    true
+    (and 
+      (= (seq.len (a this)) (seq.len (a sw)))
+      (= (seq.len (b this)) (seq.len (b sw)))
+      (= (seq.len (c this)) (seq.len (c sw)))
+    )
+  ))
+)
+
+(define-contract example_test_seq.SeqWrapper.nth
+  (
+   (i (in Int))
+   (this (in SeqWrapper))
+   (sw (in SeqWrapper))
+   )
+  ((
+    true
+    (and 
+      (= (seq.nth (a this) i) (seq.nth (a sw) i))
+      (= (seq.nth (b this) i) (seq.nth (b sw) i))
+      (= (seq.nth (c this) i) (seq.nth (c sw) i))
+    )
+  ))
+)
+
+(define-contract example_test_seq.SeqWrapper.indexOf
+  (
+   (d (in Bool))
+   (i (in Int))
+   (this (in SeqWrapper))
+   (sw (in SeqWrapper))
+   )
+  ((
+    true
+    (and 
+      (= (seq.indexof (a this) d) (seq.indexof (a sw) d))
+      (= (seq.indexof (b this) d) (seq.indexof (b sw) d))
+      (= (seq.indexof (c this) i) (seq.indexof (c sw) i))
+    )
+  ))
+)
+
+
+(define-contract example_test_seq.SeqWrapper.concat
+  (
+   (this (inout SeqWrapper))
+   (sw (in SeqWrapper))
+   )
+  ((
+    true
+    (and 
+      (= (a this) (seq.++ (old (a this)) (a sw)))
+      (= (b this) (seq.++ (old (b this)) (b sw)))
+      (= (c this) (seq.++ (old (c this)) (c sw)))
+    )
+  ))
+)
+
+
+(define-contract example_test_seq.SeqWrapper.update
+  (
+   (i (in Int))
+   (aV (in Bool))
+   (bV (in Bool))
+   (cV (in Int))
+   (this (in SeqWrapper))
+   )
+  ((
+    true
+    (and 
+      (= (a this) (seq.update (old (a this)) i (seq.unit aV)))
+      (= (b this) (seq.update (old (b this)) i (seq.unit bV)))
+      (= (c this) (seq.update (old (c this)) i (seq.unit cV)))
+    )
+  ))
+)
+

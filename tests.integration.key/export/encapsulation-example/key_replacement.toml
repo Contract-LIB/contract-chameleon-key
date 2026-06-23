@@ -1,0 +1,8 @@
+[replacements]
+
+example.LinkedCellList.init = "//Test"
+example.LinkedCellList.add = "//Test"
+example.LinkedCellList.getLast = "//Test"
+example.Cell.init = "//Test"
+example.Cell.value = "//Test"
+example.Cell.set = "//Test"

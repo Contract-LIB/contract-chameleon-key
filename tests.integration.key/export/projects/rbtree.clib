@@ -1,0 +1,41 @@
+(declare-abstractions
+  (
+    (projects.IntRbTree 0)
+  )
+  ((
+     (RbTree (absVal (Set Int)))
+  ))
+)
+
+(define-contract projects.IntRbTree.init
+    (
+      (result (out IntRbTree))
+    )
+    ((
+      true
+      (= (absVal result) set.empty)
+    ))
+)
+
+(define-contract projects.IntRbTree.contains
+    (
+      (this (in IntRbTree))
+      (value (in Int))
+      (result (out Bool))
+    )
+    ((
+      (true)
+      (= result set.member (absVal this) (value))
+    ))
+)
+
+(define-contract projects.IntRbTree.add
+    (
+      (this (in IntRbTree))
+      (value (in Int))
+    )
+    ((
+      (true)
+      (= (absVal this) (set.union (absVal (old this)) (set.singleton value)))
+    ))
+)

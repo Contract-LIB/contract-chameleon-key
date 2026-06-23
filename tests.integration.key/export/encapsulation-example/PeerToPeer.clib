@@ -1,0 +1,28 @@
+(declare-abstractions
+    ((example.Peer 0))
+    (((Peer (absVal Int)))))
+
+
+(define-contract example.Peer.init
+    ((result (out Peer)))
+    ((true
+     (= (absVal result) 0))))
+
+(define-contract example.Peer.value
+    ((this (in Peer))
+     (result (out Int)))
+    ((true
+     (= result (absVal this)))))
+
+(define-contract example.Peer.set
+    ((this (inout Peer))
+     (v (in Int)))
+    ((true
+     (= (absVal this) v))))
+
+
+(define-contract example.Peer.copyFrom
+    ((this (inout Peer))
+     (peer (in Peer)))
+    ((true
+     (= (absVal this) (absVal peer))))

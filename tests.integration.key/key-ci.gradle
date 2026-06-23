@@ -1,0 +1,35 @@
+
+ext.key_ci_tests = []
+
+def check_key_files(String taskName, String path_to_files) {
+  tasks.register(taskName, Exec) {
+    group = "KeY CI"
+    def key = project.findProperty("custom_key_exe") ?: contract_chameleon_key_exe
+    def ci_key = project.findProperty("custom_key_exe") ?: contract_chameleon_ci_key_exe
+    def key_file = new File(rootProject.rootDir, key)
+    def ci_key_file = new File(rootProject.rootDir, ci_key)
+    //If this fails, it would be goood to create the $buildDir direcory manually
+    def statistic_file = "$buildDir/$taskName-statistic.json"
+
+    commandLine "java", "-cp", "$ci_key_file:$key_file", "io.github.wadoon.keycitool.CheckerKt", path_to_files, "-s", statistic_file
+  }
+  ext.key_ci_tests << taskName
+}
+
+// Check all key projects specified in "key_ci_files.txt"
+
+def key_ci_files = file("key_ci_files.txt")
+if (key_ci_files.exists()) {
+  def key_ci_lines = key_ci_files.readLines()
+
+  key_ci_lines.each { line -> 
+    def taskName = "key_ci-check-" + line.replace("/", "_")
+    check_key_files(taskName, line)
+  }
+} 
+
+tasks.register("key_ci-check-all") {
+  group = "KeY CI"
+  dependsOn key_ci_tests
+}
+

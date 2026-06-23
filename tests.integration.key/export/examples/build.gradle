@@ -1,0 +1,23 @@
+
+// List to store all creatd tasks
+def tests = []
+
+// - Counter example
+
+def examples_counter = "examples-counter"
+def counter_clib = "./export/examples/Counter.clib"
+def counter_replace = "./export/examples/verifast_replacement_counter.toml"
+
+// - Stack example
+
+def examples_stack = "examples-stack"
+def stack_clib = "./export/examples/Stack.clib"
+def stack_replace = "./export/examples/verifast_replacement_stack.toml"
+
+// Full run
+tasks.register('it-examples-key') {
+    group = "Integration Tests"
+    description = "Run all task of examples integration tests"
+
+    dependsOn tests 
+}
