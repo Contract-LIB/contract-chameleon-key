@@ -8,7 +8,6 @@ import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import org.contract_lib.adapters.translations.terms.ImportTermTranslator;
-import org.contract_lib.adapters.translations.types.ImportTypeTranslator;
 import org.contract_lib.lang.contract_lib.ast.ArgumentMode;
 import org.contract_lib.lang.contract_lib.ast.Contract;
 import org.contract_lib.lang.contract_lib.ast.Formal;

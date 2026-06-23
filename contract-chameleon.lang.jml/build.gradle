@@ -15,7 +15,7 @@ repositories {
 
 dependencies {
     //api 'io.github.jmltoolkit:jmlparser-core:3.27.0-b7-SNAPSHOT'
-    api 'io.github.jmltoolkit:jmlparser-symbol-solver-core:3.27.0-c1-SNAPSHOT'
+    api 'io.github.jmltoolkit:jmlparser-symbol-solver-core:3.28.0-J8.0-K10.1-SNAPSHOT'
     //javadocDeps 'io.github.jmltoolkit:jmlparser-symbol-solver-core:3.26.2-b7-SNAPSHOT'
 
     // Use JUnit Jupiter for testing.

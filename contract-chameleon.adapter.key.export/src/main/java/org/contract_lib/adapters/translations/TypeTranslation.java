@@ -4,10 +4,8 @@ import java.util.List;
 import java.util.Optional;
 
 import com.github.javaparser.ast.expr.Expression;
-import com.github.javaparser.ast.expr.SimpleName;
 
 import com.github.javaparser.ast.type.Type;
-import com.github.javaparser.ast.type.ReferenceType;
 
 import org.contract_lib.lang.contract_lib.ast.Sort;
 
@@ -47,12 +45,4 @@ public interface TypeTranslation {
   //    Sort clibSort,
   //    ReferenceType jmlType) {
   //}
-
-  public interface IndexFabric {
-    SimpleName getNextIndex();
-  }
-
-  public interface TypeTranslator {
-    TypeTranslation translate(Sort sort);
-  }
 }

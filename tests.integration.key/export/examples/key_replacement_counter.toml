@@ -1,14 +1,33 @@
 [example.Counter]
 init = """
+
     this.c = 0;
     //@ set fp = \\all_fields(this);
 """
-body = "private int c;"
-value = "return this.c;"
-increment = "this.c += 1;"
-decrement = "this.c -= 1;"
-set = "this.c = value;"
-reset = "this.c = 0;"
+body = """
+
+    private int c;
+"""
+value = """
+
+    return this.c;
+"""
+increment = """
+
+    this.c += 1;
+"""
+decrement = """
+
+    this.c -= 1;
+"""
+set = """
+
+    this.c = value;
+"""
+reset = """
+
+    this.c = 0;
+"""
 file = ""
 
 [example._Client]

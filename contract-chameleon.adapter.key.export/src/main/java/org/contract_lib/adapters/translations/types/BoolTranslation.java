@@ -9,7 +9,9 @@ import com.github.javaparser.ast.type.Type;
 import com.google.auto.service.AutoService;
 import com.github.javaparser.ast.type.PrimitiveType;
 
+import org.contract_lib.adapters.translations.IndexFabric;
 import org.contract_lib.adapters.translations.TypeTranslation;
+import org.contract_lib.adapters.translations.TypeTranslator;
 import org.contract_lib.lang.contract_lib.ast.Sort;
 
 import org.contract_lib.lang.key.ast.KeySort;
@@ -35,16 +37,16 @@ public class BoolTranslation implements TypeTranslation {
   public List<Expression> getHelper(
       Expression field, //The field is of the type given in sort Seq T
       Sort sort,
-      TypeTranslation.TypeTranslator translator,
-      TypeTranslation.IndexFabric fab) {
+      TypeTranslator translator,
+      IndexFabric fab) {
     return List.of();
   }
 
   public Optional<Expression> getFootprintInvariant(
       Expression field,
       Sort sort,
-      TypeTranslation.TypeTranslator translator,
-      TypeTranslation.IndexFabric fab) {
+      TypeTranslator translator,
+      IndexFabric fab) {
     return Optional.empty();
     //new MethodCallExpr(
     //  null, // scope

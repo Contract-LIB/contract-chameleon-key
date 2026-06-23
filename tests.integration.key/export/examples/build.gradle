@@ -30,14 +30,15 @@ createKeYPipeline(
     public static Counter init() {
         return new CounterImpl();
     }
+*/
 
 createKeYPipeline(
   examples_counter,
   key_provider,
   counter_clib,
-  counter_replace
+  counter_replace,
+  []
 ).each { t -> tests << t }
-*/
 
 
 // - Stack example

@@ -67,7 +67,7 @@ public class KeyTranslations {
 
   public KeyTranslations(
       ChameleonMessageManager messageManager,
-      TypeTranslation.TypeTranslator translator,
+      TypeTranslator translator,
       Function<KeyTranslations, DatatypeTranslation> suppl) {
     this.messageManager = messageManager;
     this.sorts = new ArrayList<>();
@@ -104,7 +104,7 @@ public class KeyTranslations {
   private List<KeySort.Custom> sorts;
   private List<KeyFunction> functions;
   private List<KeyDatatype> datatypes;
-  private TypeTranslation.TypeTranslator translator;
+  private TypeTranslator translator;
 
   public TranslationResult translate(ContractLibAst ast) {
 
