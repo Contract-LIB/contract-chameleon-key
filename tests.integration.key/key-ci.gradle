@@ -40,7 +40,7 @@ ext.key_applicant = "key-applicant"
 ext.key_provider = "key-provider"
 
 //  Execute VeriFast
-ext.runKeY = { String taskName, File path_to_files ->
+ext.runKeY = { String taskName, File path_to_files, List<String> forbid_contracts ->
 
   tasks.register(taskName, Exec) {
     group = "Integration Tests KeY"
@@ -52,7 +52,11 @@ ext.runKeY = { String taskName, File path_to_files ->
     def ci_key_file = new File(rootProject.rootDir, ci_key)
     def statistic_file = "$buildDir/$taskName-statistic.json"
 
-    commandLine "java", "-cp", "$ci_key_file:$key_file", "io.github.wadoon.keycitool.CheckerKt", path_to_files, "-s", statistic_file
+    def args = forbid_contracts.collect {s -> "--forbid-contract=$s"}
+
+    println args
+
+    commandLine "java", "-cp", "$ci_key_file:$key_file", "io.github.wadoon.keycitool.CheckerKt", path_to_files, "-s", statistic_file, *args
 
     dependsOn 'check-tools-files'
   }
@@ -97,7 +101,8 @@ ext.createKeYPipeline = {
   String testName,
   String contract_chameleon_adapter,
   String contract_lib_file,
-  String replacement_file
+  String replacement_file,
+  List<String> forbid_contracts
    -> 
 
   // The tasks
@@ -130,7 +135,7 @@ ext.createKeYPipeline = {
     "${replacement_file}")
 
 
-  runKeY(key_task, replaced_destination)
+  runKeY(key_task, replaced_destination, forbid_contracts)
 
   // dependencies of tasks
   tasks.named(client_task).configure {

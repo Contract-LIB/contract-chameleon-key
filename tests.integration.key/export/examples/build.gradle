@@ -2,9 +2,6 @@
 // List to store all creatd tasks
 def tests = []
 
-def mode = "OVERWRITE"
-def log = "INFO"
-
 // - Counter example
 
 def examples_counter = "examples-counter"
@@ -16,10 +13,24 @@ createKeYPipeline(
   examples_counter,
   key_applicant,
   counter_clib,
-  counter_replace
+  counter_replace,
+  ["example.Counter[example.Counter::init()].JML normal_behavior operation contract.0"]
 ).each { t -> tests << t }
 
 /*
+
+    /*@  normal_behavior
+        requires true;
+        ensures (\result != null);
+        ensures (\result.absVal) == (0);
+        ensures \fresh(\result.fp);
+        ensures \invariant_for(\result);
+        ensures \new_elems_fresh(\result.fp);
+        
+    public static Counter init() {
+        return new CounterImpl();
+    }
+
 createKeYPipeline(
   examples_counter,
   key_provider,
@@ -28,8 +39,6 @@ createKeYPipeline(
 ).each { t -> tests << t }
 */
 
-//runIntegrationTest("key-applicant-counter", ["key-applicant", counter_clib, "-m", "${mode}"])
-//runIntegrationTest("key-provider-counter", ["key-provider", counter_clib, "-m", "${mode}"])
 
 // - Stack example
 
@@ -37,14 +46,13 @@ def examples_stack = "examples-stack"
 def stack_clib = "./export/examples/Stack.clib"
 def stack_replace = "./export/examples/key_replacement_stack.toml"
 
-//runIntegrationTest("key-applicant-stack", ["key-applicant", stack_clib, "-m", "${mode}"])
-//runIntegrationTest("key-provider-stack", ["key-provider", stack_clib, "-m", "${mode}"])
 
 createKeYPipeline(
   examples_stack,
   key_applicant,
   stack_clib,
-  stack_replace 
+  stack_replace,
+  ["example.Stack[example.Stack::init()].JML normal_behavior operation contract.0"]
 ).each { t -> tests << t }
 
 /*
