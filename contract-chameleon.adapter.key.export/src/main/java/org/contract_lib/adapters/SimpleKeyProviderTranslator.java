@@ -288,7 +288,7 @@ public class SimpleKeyProviderTranslator {
             new SimpleName("\\locset"),
             null),
         //new JmlLogicType(JmlLogicType.Primitive.SET), 
-        "footprint")
+        FOOTPRINT_NAME)
         .setPublic(true)
         //.addModifier(Modifier.DefaultKeyword.JML_INSTANCE)
         .addModifier(Modifier.DefaultKeyword.JML_GHOST);
@@ -754,11 +754,12 @@ public class SimpleKeyProviderTranslator {
     objectCreated(contract.formals(), variableScope).ifPresent(clauses::addAll);
     //allows all parameters that are `INOUT`, to have new objects created in their footprint
     newElementsFreshClause(contract.formals(), variableScope).ifPresent(clauses::add);
-    clauses.addAll(assignableClause);
 
-    // only add accessibleClause when there is a return type
+    //TODO: This might be be a completely semantics-meaning translation :(
+    // only add assignableClause / accessibleClause when there is a return type
     if (variableScope.returnType.isPresent()) {
       clauses.addAll(accessibleClause);
+      clauses.addAll(assignableClause);
     }
 
     JmlContract jmlContract = new JmlContract()

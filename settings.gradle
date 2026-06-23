@@ -12,3 +12,9 @@ include('contract-chameleon.lang.key')
 // - Adapter packages
 include('contract-chameleon.adapter.key.export')
 include('contract-chameleon.adapter.key.import')
+
+
+// - Integration tests
+
+
+include('tests.integration.key')

@@ -4,17 +4,16 @@
 ext.integrationTasks = []
 
 ext.runIntegrationTest = { String taskName, List<String> argList ->
-    def appModule = ":contract-chameleon.cl"
+
     tasks.register(taskName, JavaExec) {
         group = "Integration Tests"
         description = "Run task '${taskName}'"
-        dependsOn "${appModule}:classes"
+        //dependsOn "${rootProject}:classes"
 
-        def sub = project(appModule)
-        classpath = sub.sourceSets.main.runtimeClasspath +
+        classpath = rootProject.sourceSets.main.runtimeClasspath +
           project(":contract-chameleon.adapter.key.export").sourceSets.main.runtimeClasspath +
           project(":contract-chameleon.adapter.key.import").sourceSets.main.runtimeClasspath
-        mainClass.set(sub.application.mainClass)
+        mainClass.set(rootProject.application.mainClass)
 
         args = argList
     }

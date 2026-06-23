@@ -1,5 +1,153 @@
 
-ext.key_ci_tests = []
+// - Help calls
+tasks.register("help-key-ci", Exec) {
+  def key = project.findProperty("custom_key_exe") ?: contract_chameleon_key_exe
+  def ci_key = project.findProperty("custom_key_exe") ?: contract_chameleon_ci_key_exe
+  def key_file = new File(rootProject.rootDir, key)
+  def ci_key_file = new File(rootProject.rootDir, ci_key)
+  
+  group = "Help"
+  description = "Run the help command of key ci."
+
+  commandLine "java", "-cp", "$ci_key_file:$key_file", "io.github.wadoon.keycitool.CheckerKt", "--help"
+
+  dependsOn 'check-tools-files'
+}
+
+tasks.register("help-key", Exec) {
+
+  def key = project.findProperty("custom_key_exe") ?: contract_chameleon_key_exe
+  def key_file = new File(rootProject.rootDir, key)
+
+  group = "Help"
+  description = "Run the help command of key."
+
+  commandLine "java", "-jar", key_file.absolutePath, "--help"
+  ignoreExitValue = true
+
+  dependsOn 'check-tools-files'
+}
+
+tasks.register("help-all") {
+  group = "Help"
+  description = "Run the help command of all tools."
+  dependsOn 'run-help-key', 'run-help-key-ci'
+}
+
+// - KeY Integration tests
+
+ext.key_applicant = "key-applicant"
+ext.key_provider = "key-provider"
+
+//  Execute VeriFast
+ext.runKeY = { String taskName, File path_to_files ->
+
+  tasks.register(taskName, Exec) {
+    group = "Integration Tests KeY"
+    description = "Call the geneated code in key."
+
+    def key = project.findProperty("custom_key_exe") ?: contract_chameleon_key_exe
+    def ci_key = project.findProperty("custom_key_exe") ?: contract_chameleon_ci_key_exe
+    def key_file = new File(rootProject.rootDir, key)
+    def ci_key_file = new File(rootProject.rootDir, ci_key)
+    def statistic_file = "$buildDir/$taskName-statistic.json"
+
+    commandLine "java", "-cp", "$ci_key_file:$key_file", "io.github.wadoon.keycitool.CheckerKt", path_to_files, "-s", statistic_file
+
+    dependsOn 'check-tools-files'
+  }
+}
+
+// Create Client for KeY
+ext.createKeYClient = { String taskName, String destination, String clientPackage, String clientName ->
+  tasks.register(taskName) {
+
+      def clientFile = layout.buildDirectory
+        .dir(destination)
+        .map { it.dir(clientPackage.replace('.', '/')) }
+        .map { it.file("${clientName}.java") }
+        .get().asFile
+
+
+      def sourcesFile = layout.buildDirectory
+        .dir(destination)
+        .map { it.file("sources.jarsrc") }
+        .get().asFile
+
+      doLast {
+          clientFile.parentFile.mkdirs()
+          clientFile.text = "// TODO: Implement '${clientPackage}.${clientName}.file'."
+      }
+  }
+}
+
+
+// - Runtime arguments for contract-chameleon
+def mode = "OVERWRITE" // To force override in CC 
+def log = "INFO" // To set log level in CC
+
+// - Create a complete key pipeline
+//   - contract-chameleon
+//   - client generation
+//   - replacement
+//   - key verification
+//
+// The tasks are uniquely named by test name and contract-chameleon adapter.
+ext.createKeYPipeline = {
+  String testName,
+  String contract_chameleon_adapter,
+  String contract_lib_file,
+  String replacement_file
+   -> 
+
+  // The tasks
+  def contract_chameleon_task = "${testName}-${contract_chameleon_adapter}-contract-chameleon"
+  def client_task = "${testName}-${contract_chameleon_adapter}-client"
+  def replace_task = "${testName}-${contract_chameleon_adapter}-replace"
+  def key_task = "${testName}-${contract_chameleon_adapter}-verify"
+
+  // The build locations
+  def buildDir = layout.buildDirectory
+  def contract_chameleon_destination = buildDir.dir("results/${testName}/${contract_chameleon_adapter}").get().asFile
+  def replaced_destination = buildDir.dir("replaced/${testName}/${contract_chameleon_adapter}").get().asFile
+
+  // creation of tasks 
+  runIntegrationTest(contract_chameleon_task,
+    ["${contract_chameleon_adapter}",
+     "${contract_lib_file}",
+     "-o", "${contract_chameleon_destination}",
+     "-m", "${mode}",
+     "-l", "${log}"])
+
+  createKeYClient(client_task,
+    "${contract_chameleon_destination}",
+    "example",
+    "_Client")
+
+  replaceWithImpl(replace_task,
+    "${contract_chameleon_destination}",
+    "${replaced_destination}",
+    "${replacement_file}")
+
+
+  runKeY(key_task, replaced_destination)
+
+  // dependencies of tasks
+  tasks.named(client_task).configure {
+    dependsOn(contract_chameleon_task)
+  }
+  tasks.named(replace_task).configure {
+    dependsOn(client_task)
+  }
+  tasks.named(key_task).configure {
+    dependsOn(replace_task)
+  }
+  
+  ["${contract_chameleon_task}", "${client_task}", "${replace_task}", "${key_task}"]
+}
+
+
+// - Old KeY tasks
 
 def check_key_files(String taskName, String path_to_files) {
   tasks.register(taskName, Exec) {
@@ -13,11 +161,10 @@ def check_key_files(String taskName, String path_to_files) {
 
     commandLine "java", "-cp", "$ci_key_file:$key_file", "io.github.wadoon.keycitool.CheckerKt", path_to_files, "-s", statistic_file
   }
-  ext.key_ci_tests << taskName
+  //ext.key_ci_tests << taskName
 }
 
 // Check all key projects specified in "key_ci_files.txt"
-
 def key_ci_files = file("key_ci_files.txt")
 if (key_ci_files.exists()) {
   def key_ci_lines = key_ci_files.readLines()
@@ -26,10 +173,4 @@ if (key_ci_files.exists()) {
     def taskName = "key_ci-check-" + line.replace("/", "_")
     check_key_files(taskName, line)
   }
-} 
-
-tasks.register("key_ci-check-all") {
-  group = "KeY CI"
-  dependsOn key_ci_tests
 }
-

@@ -2,17 +2,59 @@
 // List to store all creatd tasks
 def tests = []
 
+def mode = "OVERWRITE"
+def log = "INFO"
+
 // - Counter example
 
 def examples_counter = "examples-counter"
 def counter_clib = "./export/examples/Counter.clib"
-def counter_replace = "./export/examples/verifast_replacement_counter.toml"
+def counter_replace = "./export/examples/key_replacement_counter.toml"
+
+
+createKeYPipeline(
+  examples_counter,
+  key_applicant,
+  counter_clib,
+  counter_replace
+).each { t -> tests << t }
+
+/*
+createKeYPipeline(
+  examples_counter,
+  key_provider,
+  counter_clib,
+  counter_replace
+).each { t -> tests << t }
+*/
+
+//runIntegrationTest("key-applicant-counter", ["key-applicant", counter_clib, "-m", "${mode}"])
+//runIntegrationTest("key-provider-counter", ["key-provider", counter_clib, "-m", "${mode}"])
 
 // - Stack example
 
 def examples_stack = "examples-stack"
 def stack_clib = "./export/examples/Stack.clib"
-def stack_replace = "./export/examples/verifast_replacement_stack.toml"
+def stack_replace = "./export/examples/key_replacement_stack.toml"
+
+//runIntegrationTest("key-applicant-stack", ["key-applicant", stack_clib, "-m", "${mode}"])
+//runIntegrationTest("key-provider-stack", ["key-provider", stack_clib, "-m", "${mode}"])
+
+createKeYPipeline(
+  examples_stack,
+  key_applicant,
+  stack_clib,
+  stack_replace 
+).each { t -> tests << t }
+
+/*
+createKeYPipeline(
+  examples_stack,
+  key_provider,
+  stack_clib,
+  stack_replace 
+).each { t -> tests << t }
+*/
 
 // Full run
 tasks.register('it-examples-key') {

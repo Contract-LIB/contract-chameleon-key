@@ -6,12 +6,17 @@ import com.github.javaparser.ast.type.Type;
 import com.google.auto.service.AutoService;
 import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.expr.ArrayAccessExpr;
+import com.github.javaparser.ast.expr.CastExpr;
+import com.github.javaparser.ast.expr.EnclosedExpr;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.FieldAccessExpr;
 import com.github.javaparser.ast.expr.IntegerLiteralExpr;
 import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.ast.expr.NameExpr;
 import com.github.javaparser.ast.expr.SimpleName;
+import com.github.javaparser.ast.expr.TypeExpr;
+import com.github.javaparser.ast.jml.type.JmlLogicType;
+import com.github.javaparser.ast.jml.type.JmlLogicType.Primitive;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.PrimitiveType;
 
@@ -70,7 +75,9 @@ public record SeqFuncTranslations() implements FuncProvider {
         // - Sequence queries 
         new FuncTranslation.MethodExpr(
             "seq.len",
-            (s) -> new FieldAccessExpr(s.get(0), "length"),
+            (s) -> new FieldAccessExpr(
+                new EnclosedExpr(new CastExpr(new ClassOrInterfaceType(null, new SimpleName("\\seq"), null), s.get(0))),
+                "length"),
             List.of(CLIB_SEQ_TYPE),
             List.of(JML_SEQ_TYPE),
             JML_SEQ_TYPE,

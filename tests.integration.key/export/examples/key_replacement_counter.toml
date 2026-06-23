@@ -1,0 +1,44 @@
+[example.Counter]
+init = """
+    this.c = 0;
+    //@ set fp = \\all_fields(this);
+"""
+body = "private int c;"
+value = "return this.c;"
+increment = "this.c += 1;"
+decrement = "this.c -= 1;"
+set = "this.c = value;"
+reset = "this.c = 0;"
+file = ""
+
+[example._Client]
+
+file = """
+package example;
+
+public class _Client {
+
+  public static void main(String[] args) 
+  {
+    testCounter();
+  }
+
+  public static void testCounter() 
+  {
+    Counter c1 = Counter.init();
+    int r1 = c1.value();
+
+    c1.increment();
+    int r2 = c1.value();
+
+    c1.decrement();
+    int r3 = c1.value();
+
+    c1.set(10);
+    int r4 = c1.value();
+
+    c1.reset();
+    int r5 = c1.value();
+  }
+}
+"""

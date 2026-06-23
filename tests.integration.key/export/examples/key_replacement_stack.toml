@@ -1,0 +1,63 @@
+[example.Stack]
+body = """
+
+    private int[] comp;
+    private int size;
+    private final int MAX_SIZE = 1000;"""
+
+init = """
+
+      this.comp = new int[MAX_SIZE];
+      this.size = 0;
+
+      //@ set fp = \\all_fields(this);
+"""
+
+peek = "return this.comp[this.size-1];"
+
+push = """
+
+      this.comp[this.size] = v;
+      this.size++;"""
+
+pop = "this.size--;"
+
+reset = "this.size = 0;"
+
+file = ""
+
+[example._Client]
+
+file = """
+package example;
+
+public class _Client {
+
+  public static void main(String[] args) 
+  {
+    testStack();
+  }
+
+  public static void testStack() 
+  {
+    Stack c1 = Stack.init();
+    c1.push(0);
+    
+    int r1 = c1.peek();
+
+    c1.push(1);
+
+    int r2 = c1.peek();
+
+    c1.push(2);
+
+    int r3 = c1.peek();
+
+    c1.pop();
+
+    int r4 = c1.peek();
+
+    c1.reset();
+  }
+}
+"""
