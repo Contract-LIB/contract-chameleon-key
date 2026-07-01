@@ -99,6 +99,7 @@ import org.contract_lib.adapters.translations.IndexFabric;
 import org.contract_lib.adapters.translations.VariableScope;
 import org.contract_lib.adapters.translations.VariableScopeManager;
 import org.contract_lib.adapters.translations.VariableTranslator;
+import org.contract_lib.adapters.translations.default_translators.DefaultContractTranslator;
 import org.contract_lib.adapters.translations.default_translators.DefaultFuncTranslator;
 import org.contract_lib.adapters.translations.default_translators.DefaultIndexFabric;
 import org.contract_lib.adapters.translations.default_translators.DefaultSortTranslator;
@@ -176,7 +177,7 @@ public class SimpleKeyProviderTranslator {
         this.sortTranslator,
         this.funcTranslator);
 
-    this.contractTranslator = new ContractTranslator(
+    this.contractTranslator = new DefaultContractTranslator(
         this.sortTranslator,
         this.termTranslator,
         FOOTPRINT_NAME,
