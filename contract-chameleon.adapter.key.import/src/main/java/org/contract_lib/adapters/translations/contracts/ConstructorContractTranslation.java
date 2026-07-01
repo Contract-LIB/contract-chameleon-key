@@ -45,7 +45,7 @@ public final class ConstructorContractTranslation implements ImportContractTrans
       return Optional.empty();
     }
 
-    Optional<JmlContract> cl = methodDeclaration.contracts().getFirst();
+    Optional<JmlContract> cl = Optional.ofNullable(methodDeclaration.contracts().getFirst());
 
     if (cl.isEmpty()) {
       System.err.println("At least one contract is required per method.");
