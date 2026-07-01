@@ -682,6 +682,7 @@ public class SimpleKeyProviderTranslator {
 
   protected Optional<List<JmlClause>> objectCreated(List<Formal> formals, VariableTranslator variableScope) {
     return formals.stream()
+        .filter((f) -> isReference(f, variableScope))
         .filter((f) -> ArgumentMode.OUT.equals(f.argumentMode()))
         .map(Formal::identifier)
         .map(variableScope::translate)
