@@ -20,6 +20,7 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.Modifier;
 import com.github.javaparser.ast.Node;
+import com.github.javaparser.ast.body.CallableDeclaration;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
@@ -109,6 +110,20 @@ public class SimpleKeyProviderTranslator {
 
   private Set<DetailLevel> detailLevel = new HashSet<>();
 
+  //Map storing available translations for sorts
+  SortTranslator sortTranslator = new SortTranslator(new HashMap<>());
+
+  //Map storing availabel translations for func symbols
+  FuncTranslator funcTranslator = new FuncTranslator(new HashMap<>());
+
+  //This map stores the abstract class definitions generated from the abstractions 
+  Map<String, ClassOrInterfaceDeclaration> abstractAbstractions = new HashMap<>();
+
+  //This map stores the class implementation blueprints generated from the abstractions 
+  Map<String, ClassOrInterfaceDeclaration> abstractionImpementations = new HashMap<>();
+
+  List<TranslationResult> results = new ArrayList<>();
+
   public SimpleKeyProviderTranslator(
       ChameleonMessageManager manager) {
 
@@ -142,189 +157,9 @@ public class SimpleKeyProviderTranslator {
     funcLoader.forEach(f -> funcTranslator.store(f.getAll()));
   }
 
-  record SimpleResult(
-      String packageName,
-      String className,
-      CompilationUnit cu) implements TranslationResult {
-    @Override
-    public Optional<String> extendSubDirectory() {
-      return Optional.ofNullable(packageName);
-    }
-
-    public String fileName() {
-      return className;
-    }
-
-    public String fileEnding() {
-      return ".java";
-    }
-
-    public void writeTo(Writer writer) throws IOException {
-      PrinterConfiguration config = new DefaultPrinterConfiguration();
-      DefaultPrettyPrinter printer = new DefaultPrettyPrinter(config);
-      writer.write(printer.print(cu));
-    }
-  }
-
-  private record SortTranslator(
-      Map<String, TypeTranslation> map) implements TypeTranslation.TypeTranslator {
-    public void store(TypeTranslation trans) {
-      //TODO: Do error check if translation is ambigous
-      this.map().put(trans.getClibSort().getName(), trans);
-    }
-
-    public TypeTranslation translate(Sort sort) {
-      TypeTranslation translation = this.map().get(sort.getName());
-      if (translation == null) {
-        //TODO: Report proper error
-        System.err.println(String.format("ERROR: The type '%s' could not be translated.", sort));
-        return null;
-      }
-      return translation;
-    }
-  }
-
-  private record FuncTranslator(
-      Map<String, FuncTranslation> map) implements FuncTranslation.FuncTranslator {
-
-    public void store(List<FuncTranslation> translations) {
-      //TODO: Error check if ambigous
-      for (FuncTranslation trans : translations) {
-        this.map().put(trans.getClibIdentifier().identifier().identifier(), trans);
-      }
-    }
-
-    public FuncTranslation translate(Term.Identifier.IdentifierValue identifier) {
-      FuncTranslation t = this.map().get(identifier.identifier().identifier());
-      if (t == null) {
-        System.err.println(String.format("ERROR: Translations for the identifier '%s' not found.", identifier));
-        return null;
-      }
-      return t;
-    }
-  }
-
-  //TODO: This is just a most simple implementation, might be reworked, but serves it purpose for now
-  private final class VariableScopeManager implements VariableScope.VariableTranslator {
-
-    Map<String, VariableScope> map = new HashMap<>();
-    Optional<Type> returnType = Optional.empty();
-    Optional<Type> ownerType = Optional.empty();
-    List<Parameter> parameters = new ArrayList<>();
-
-    public void add(SortedVar sortedVar) {
-      TypeTranslation t = sortTranslator.translate(sortedVar.sort());
-      VariableScopeElement el = new VariableScopeElement(
-          sortedVar.symbol(),
-          new NameExpr(sortedVar.symbol().identifier()),
-          sortedVar.sort(),
-          t.getJmlType(sortedVar.sort()),
-          t.hasFootprint());
-      map.put(el.getClibSymbol().identifier(), el);
-    }
-
-    public void remove(SortedVar sortedVar) {
-      map.remove(sortedVar.symbol().identifier());
-    }
-
-    public void add(Formal formal) {
-      TypeTranslation t = sortTranslator.translate(formal.sort());
-      Symbol s = new Symbol(formal.identifier().identifier());
-      //TODO: find better way for result
-      if (formal.identifier().identifier().equals("result")) {
-        VariableScopeElement el = new VariableScopeElement(
-            s,
-            new NameExpr(RESULT_LABEL),
-            formal.sort(),
-            t.getJmlType(formal.sort()),
-            t.hasFootprint());
-        this.returnType = Optional.ofNullable(t.getJmlType(formal.sort()));
-        map.put(el.getClibSymbol().identifier(), el);
-      } else if (formal.identifier().identifier().equals("this")) {
-        this.ownerType = Optional.ofNullable(t.getJmlType(formal.sort()));
-        VariableScopeElement el = new VariableScopeElement(
-            s,
-            new ThisExpr(),
-            formal.sort(),
-            t.getJmlType(formal.sort()),
-            t.hasFootprint());
-        map.put(el.getClibSymbol().identifier(), el);
-      } else {
-        VariableScopeElement el = new VariableScopeElement(
-            s,
-            new NameExpr(formal.identifier().identifier()),
-            formal.sort(),
-            t.getJmlType(formal.sort()),
-            t.hasFootprint());
-        map.put(el.getClibSymbol().identifier(), el);
-        parameters.add(new Parameter(
-            t.getJmlType(formal.sort()),
-            new SimpleName(formal.identifier().identifier())));
-      }
-    }
-
-    public Optional<VariableScope> translate(Symbol symbol) {
-      return Optional.ofNullable(map.get(symbol.identifier()));
-    }
-  }
-
-  private record VariableScopeElement(
-      Symbol symbol,
-      Expression expression,
-      Sort clibResultType,
-      Type jmlResultType,
-      boolean hasFootprint) implements VariableScope {
-    public Symbol getClibSymbol() {
-      return symbol;
-    }
-
-    public Expression getJmlTerm() {
-      return expression;
-    }
-
-    public Sort getClibResultType() {
-      return clibResultType;
-    }
-
-    public Type getJmlResultType() {
-      return jmlResultType;
-    }
-
-    public boolean hasFootprint() {
-      return hasFootprint;
-    }
-  }
-
-  private final class IndexFab implements TypeTranslation.IndexFabric {
-    private char i = 'a';
-
-    public SimpleName getNextIndex() {
-      char res = i;
-      i++;
-      if (i > 'z') {
-        //TODO: report Error
-        i = 'a';
-      }
-      return new SimpleName(String.valueOf(res));
-    }
-  }
-
-  //Map storing available translations for sorts
-  SortTranslator sortTranslator = new SortTranslator(new HashMap<>());
-
-  //Map storing availabel translations for func symbols
-  FuncTranslator funcTranslator = new FuncTranslator(new HashMap<>());
-
-  //This map stores the abstract class definitions generated from the abstractions 
-  Map<String, ClassOrInterfaceDeclaration> abstractAbstractions = new HashMap<>();
-
-  //This map stores the class implementation blueprints generated from the abstractions 
-  Map<String, ClassOrInterfaceDeclaration> abstractionImpementations = new HashMap<>();
-
-  List<TranslationResult> results = new ArrayList<>();
-
-  List<TranslationResult> translateContractLibAstApplicant(ContractLibAst ast) {
-
+  public List<TranslationResult> translateContractLibAst(
+      ContractLibAst ast,
+      boolean provider) {
     results.add(keyTranslator.translate(ast));
     keyTranslator.getSorts().stream()
         .map(LogicTypeTranslation::new)
@@ -335,7 +170,7 @@ public class SimpleKeyProviderTranslator {
     //Creates the list of all provided abstractions
     ast.abstractions()
         .stream()
-        .forEach(this::translateAbstractionApplicant);
+        .forEach(a -> translateAbstraction(a, provider));
 
     //Populates all abstractions with their contracts
     ast.contracts()
@@ -347,30 +182,11 @@ public class SimpleKeyProviderTranslator {
     return results;
   }
 
-  List<TranslationResult> translateContractLibAstProvider(ContractLibAst ast) {
-
-    results.add(keyTranslator.translate(ast));
-    keyTranslator.getSorts().stream()
-        .map(LogicTypeTranslation::new)
-        .forEach(sortTranslator::store);
-
-    funcTranslator.store(keyTranslator.getCons());
-
-    //Creates the list of all provided abstractions
-    ast.abstractions()
-        .stream()
-        .forEach(this::translateAbstractionProvider);
-
-    //Populates all abstractions with their contracts
-    ast.contracts()
-        .stream()
-        .forEach(this::translateContract);
-
-    return results;
-  }
-
   private SimpleName getName(SelectorDec selector) {
     return new SimpleName(selector.symbol().identifier());
+  }
+
+  protected void annotateMethodDecl(CallableDeclaration<?> decl) {
   }
 
   private boolean abstractionBuilder(
@@ -399,7 +215,6 @@ public class SimpleKeyProviderTranslator {
   }
 
   private void addGhostField(ClassOrInterfaceDeclaration dec, SelectorDec selector) {
-
     TypeTranslation translation = sortTranslator.translate(selector.sort());
 
     FieldDeclaration fieldDec = new FieldDeclaration(
@@ -465,8 +280,7 @@ public class SimpleKeyProviderTranslator {
     //.addModifier(Modifier.DefaultKeyword.JML_INSTANCE)));
   }
 
-  private void addAbstractionFootprint(ClassOrInterfaceDeclaration dec) {
-
+  protected void addAbstractionFootprint(ClassOrInterfaceDeclaration dec) {
     FieldDeclaration fieldDec = new FieldDeclaration(
         NodeList.nodeList(),
         new ClassOrInterfaceType(
@@ -506,7 +320,10 @@ public class SimpleKeyProviderTranslator {
     dec.addMember(footprintInv);
   }
 
-  private void addAccessibleDef(ClassOrInterfaceDeclaration dec, List<SelectorDec> selector) {
+  protected void annotateClassOrInterfaceDecl(ClassOrInterfaceDeclaration decl) {
+  }
+
+  protected void addAccessibleDef(ClassOrInterfaceDeclaration dec, List<SelectorDec> selector) {
 
     // All invariants have to relay on footprint
     JmlClassAccessibleDeclaration accessInv = new JmlClassAccessibleDeclaration(
@@ -524,7 +341,7 @@ public class SimpleKeyProviderTranslator {
     dec.addMember(accessInv);
   }
 
-  private void addImplementationFootprint(ClassOrInterfaceDeclaration dec, Abstraction abstraction) {
+  protected void addImplementationFootprint(ClassOrInterfaceDeclaration dec, Abstraction abstraction) {
     DatatypeDec dt = abstraction.datatypeDec();
     if (dt.constructors().size() != 1) {
       System.err.println("Only datatypes with one constructor are allowed.");
@@ -545,7 +362,7 @@ public class SimpleKeyProviderTranslator {
       Abstraction abstraction,
       String packageName,
       String className) {
-    // Abstract Classe Definition
+    // Abstract Class Definition
     CompilationUnit abstractCompUnit = new CompilationUnit();
     abstractCompUnit.setPackageDeclaration(packageName);
 
@@ -553,6 +370,7 @@ public class SimpleKeyProviderTranslator {
         .addClass(className)
         .setPublic(true)
         .setAbstract(true);
+    annotateClassOrInterfaceDecl(abstractClassDeclaration);
 
     if (!abstractionBuilder(abstraction, abstractClassDeclaration)) {
       System.err.println("Abort abstraction translation.");
@@ -584,6 +402,7 @@ public class SimpleKeyProviderTranslator {
         .addClass(className + IMPLEMENTATION_SUFFIX)
         .setPublic(true)
         .addExtendedType(parentType);
+    annotateClassOrInterfaceDecl(classImpl);
 
     addImplementationFootprint(classImpl, abstraction);
 
@@ -597,23 +416,12 @@ public class SimpleKeyProviderTranslator {
     results.add(resImpl);
   }
 
-  private void translateAbstractionApplicant(
-      Abstraction abstraction) {
-    //TODO: Extract package name from abstraction or report warning
-    String packageName = packageName(abstraction);
-    String className = className(abstraction);
-
-    System.err.println("Abstr Dec: " + getIdentifier(packageName, className));
-
-    createAbstractClass(abstraction, packageName, className);
-  }
-
   private String getIdentifier(String packageName, String className) {
     return packageName + "." + className;
   }
 
-  private void translateAbstractionProvider(Abstraction abstraction) {
-
+  private void translateAbstraction(
+      Abstraction abstraction, boolean provider) {
     //TODO: Extract package name from abstraction or report warning
     String packageName = packageName(abstraction);
     String className = className(abstraction);
@@ -621,7 +429,8 @@ public class SimpleKeyProviderTranslator {
     System.err.println("Abstr Dec: " + getIdentifier(packageName, className));
 
     createAbstractClass(abstraction, packageName, className);
-    createImplementationClass(abstraction, packageName, className);
+    if (provider)
+      createImplementationClass(abstraction, packageName, className);
   }
 
   private ExpressionPair translateExprPair(PrePostPair pair, VariableTranslator scope) {
@@ -707,18 +516,18 @@ public class SimpleKeyProviderTranslator {
   }
 
   private boolean isInPrecondition(ArgumentMode am) {
-    return am.equals(ArgumentMode.IN) | am.equals(ArgumentMode.INOUT);
+    return am.equals(ArgumentMode.IN) || am.equals(ArgumentMode.INOUT);
   }
 
   private boolean isInPostcondition(ArgumentMode am) {
     return true;
   }
 
-  private boolean isAssignable(ArgumentMode am) {
-    return am.equals(ArgumentMode.OUT) | am.equals(ArgumentMode.INOUT);
+  protected boolean isAssignable(ArgumentMode am) {
+    return am.equals(ArgumentMode.OUT) || am.equals(ArgumentMode.INOUT);
   }
 
-  private boolean isAccessible(ArgumentMode am) {
+  protected boolean isAccessible(ArgumentMode am) {
     return true;
   }
 
@@ -726,17 +535,21 @@ public class SimpleKeyProviderTranslator {
     return !formal.identifier().identifier().equals("result");
   }
 
-  private boolean isReference(Formal formal, VariableTranslator variableScope) {
-    Optional<VariableScope> variable = variableScope.translate(formal.identifier());
+  protected boolean isReference(Formal formal, VariableTranslator variableScope) {
+    return isReference(formal.identifier(), variableScope);
+  }
+
+  protected boolean isReference(Symbol sym, VariableTranslator variableScope) {
+    Optional<VariableScope> variable = variableScope.translate(sym);
     VariableScope expr = variable.orElseGet(() -> {
-      System.err.println(String.format("ERROR: Identifier value not found: %s", formal.identifier()));
+      System.err.println(String.format("ERROR: Identifier value not found: %s", sym));
       //TODO: Provide proper translation
       return new VariableScopeElement(null, null, null, null, false);
     });
     return expr.hasFootprint();
   }
 
-  private JmlClause translateAssignableAccessibleClause(
+  protected JmlClause translateAssignableAccessibleClause(
       Formal formal,
       JmlClauseKind kind,
       VariableTranslator variableScope) {
@@ -758,7 +571,7 @@ public class SimpleKeyProviderTranslator {
             new SimpleName(FOOTPRINT_NAME)));
   }
 
-  private List<JmlClause> translateAccessible(
+  protected List<JmlClause> translateAccessible(
       List<Formal> formals,
       VariableTranslator variableScope) {
 
@@ -773,7 +586,7 @@ public class SimpleKeyProviderTranslator {
     return accessible;
   }
 
-  private List<JmlClause> translateAssignable(
+  protected List<JmlClause> translateAssignable(
       List<Formal> formals,
       VariableTranslator variableScope) {
 
@@ -788,7 +601,44 @@ public class SimpleKeyProviderTranslator {
     return assignable;
   }
 
-  private List<JmlClause> disjuntClauses(
+  protected Optional<JmlClause> newElementsFreshClause(
+      List<Formal> formals,
+      VariableTranslator variableScope) {
+
+    List<Expression> changeableFootprint = formals.stream()
+        .filter((f) -> isReference(f, variableScope))
+        .filter((f) -> isAssignable(f.argumentMode()))
+        .map(Formal::identifier)
+        .map(variableScope::translate)
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .map(VariableScope::getJmlTerm)
+        .toList();
+
+    if (changeableFootprint.isEmpty()) {
+      return Optional.empty();
+    }
+
+    return Optional.of(new JmlSimpleExprClause(ENSURES,
+        null,
+        NodeList.nodeList(),
+        new MethodCallExpr(null, new SimpleName("\\new_elems_fresh"),
+            NodeList.nodeList(createUnionClause(changeableFootprint)))));
+  }
+
+  //NOTE: requries at leas one element
+  private Expression createUnionClause(List<Expression> expressions) {
+    if (expressions.size() == 1) {
+      return new FieldAccessExpr(expressions.getFirst(), FOOTPRINT_NAME);
+    }
+    Expression first = expressions.removeFirst();
+    return new MethodCallExpr(null, new SimpleName("\\union"),
+        NodeList.nodeList(
+            new FieldAccessExpr(first, FOOTPRINT_NAME),
+            createUnionClause(expressions)));
+  }
+
+  protected List<JmlClause> disjointClauses(
       JmlClauseKind kind,
       List<Formal> formals,
       Predicate<ArgumentMode> filter,
@@ -816,59 +666,21 @@ public class SimpleKeyProviderTranslator {
             new JmlSimpleExprClause(kind,
                 null,
                 NodeList.nodeList(),
-                createDisjunctClause(a, b)));
+                createDisjointClause(a, b)));
       }
     }
 
     return res;
   }
 
-  private Optional<JmlClause> newElementsFreshClause(
-      List<Formal> formals,
-      VariableTranslator variableScope) {
-
-    List<Expression> changeableFootprint = formals.stream()
-        .filter((f) -> isReference(f, variableScope))
-        .filter((f) -> isAssignable(f.argumentMode()))
-        .map(Formal::identifier)
-        .map(variableScope::translate)
-        .filter(Optional::isPresent)
-        .map(Optional::get)
-        .map(VariableScope::getJmlTerm)
-        .toList();
-
-    if (changeableFootprint.isEmpty()) {
-      return Optional.empty();
-    }
-
-    return Optional.of(new JmlSimpleExprClause(ENSURES,
-        null,
-        NodeList.nodeList(),
-        new MethodCallExpr(null, new SimpleName("\\new_elems_fresh"),
-            NodeList.nodeList(createUnionClause(changeableFootprint)))));
-  }
-
-  private MethodCallExpr createDisjunctClause(Expression a, Expression b) {
+  private MethodCallExpr createDisjointClause(Expression a, Expression b) {
     return new MethodCallExpr(null, new SimpleName("\\disjoint"),
         NodeList.nodeList(
             new FieldAccessExpr(a, FOOTPRINT_NAME),
             new FieldAccessExpr(b, FOOTPRINT_NAME)));
   }
 
-  //NOTE: requries at leas one element
-  private Expression createUnionClause(List<Expression> expressions) {
-    if (expressions.size() == 1) {
-      return new FieldAccessExpr(expressions.getFirst(), FOOTPRINT_NAME);
-    }
-    Expression first = expressions.removeFirst();
-    return new MethodCallExpr(null, new SimpleName("\\union"),
-        NodeList.nodeList(
-            new FieldAccessExpr(first, FOOTPRINT_NAME),
-            createUnionClause(expressions)));
-  }
-
-  private Optional<List<JmlClause>> objectCreated(List<Formal> formals, VariableTranslator variableScope) {
-
+  protected Optional<List<JmlClause>> objectCreated(List<Formal> formals, VariableTranslator variableScope) {
     return formals.stream()
         .filter((f) -> isReference(f, variableScope))
         .filter((f) -> ArgumentMode.OUT.equals(f.argumentMode()))
@@ -886,7 +698,6 @@ public class SimpleKeyProviderTranslator {
                 NodeList.nodeList(),
                 new MethodCallExpr(null, new SimpleName("\\invariant_for"),
                     NodeList.nodeList(new NameExpr(RESULT_LABEL))))));
-
   }
 
   public void translateContract(Contract contract) {
@@ -900,11 +711,10 @@ public class SimpleKeyProviderTranslator {
 
     VariableScopeManager variableScope = getParameterScope(contract.formals());
 
-    Optional<Type> returnT = variableScope.returnType;
     //TODO: Check that owner matches
     Optional<Type> ownerType = variableScope.ownerType;
 
-    Type returnType = returnT.orElseGet(VoidType::new);
+    Type returnType = getReturnT(methodSignaturExtractor.isStatic(), variableScope);
 
     List<ExpressionPair> clausePairs = contract.pairs()
         .stream()
@@ -919,13 +729,13 @@ public class SimpleKeyProviderTranslator {
         .setExpression(joinPostContracts(clausePairs))
         .setKind(ENSURES);
 
-    List<JmlClause> disPreClause = disjuntClauses(
+    List<JmlClause> disPreClause = disjointClauses(
         REQUIRES,
         contract.formals(),
         this::isInPrecondition,
         variableScope);
 
-    List<JmlClause> disPostClause = disjuntClauses(
+    List<JmlClause> disPostClause = disjointClauses(
         ENSURES,
         contract.formals(),
         this::isInPostcondition,
@@ -944,11 +754,11 @@ public class SimpleKeyProviderTranslator {
     objectCreated(contract.formals(), variableScope).ifPresent(clauses::addAll);
     //allows all parameters that are `INOUT`, to have new objects created in their footprint
     newElementsFreshClause(contract.formals(), variableScope).ifPresent(clauses::add);
-    clauses.addAll(accessibleClause);
+    clauses.addAll(assignableClause);
 
-    // only add assignableClause when there is a return type
+    // only add accessibleClause when there is a return type
     if (variableScope.returnType.isPresent()) {
-      clauses.addAll(assignableClause);
+      clauses.addAll(accessibleClause);
     }
 
     JmlContract jmlContract = new JmlContract()
@@ -966,6 +776,7 @@ public class SimpleKeyProviderTranslator {
     }
 
     ClassOrInterfaceDeclaration classImpl = abstractionImpementations.get(classIdentifier);
+    var parameters = getParameters(variableScope);
 
     if (methodSignaturExtractor.isStatic()) {
       System.err.println("Static constructor method found");
@@ -975,7 +786,7 @@ public class SimpleKeyProviderTranslator {
         returnStmt.setLineComment("NOTE: This should be never called, as it is only the interface!");
       } else {
 
-        List<Expression> args = variableScope.parameters.stream().map(p -> new NameExpr(p.getNameAsString()))
+        List<Expression> args = parameters.stream().map(p -> new NameExpr(p.getNameAsString()))
             .collect(Collectors.toList());
         EmptyStmt em = new EmptyStmt();
 
@@ -983,10 +794,11 @@ public class SimpleKeyProviderTranslator {
 
         NodeList<Statement> nl = NodeList.nodeList(em);
         BlockStmt body = new BlockStmt(nl);
-        classImpl.addConstructor()
-            .setParameters(NodeList.nodeList(variableScope.parameters))
+        CallableDeclaration<?> constructorDecl = classImpl.addConstructor()
+            .setParameters(NodeList.nodeList(parameters))
             .setBody(body)
             .setContracts(contracts);
+        annotateMethodDecl(constructorDecl);
 
         ObjectCreationExpr obc = new ObjectCreationExpr(
             null,
@@ -997,24 +809,25 @@ public class SimpleKeyProviderTranslator {
       NodeList<Statement> nl = NodeList.nodeList(returnStmt);
       BlockStmt body = new BlockStmt(nl);
 
-      MethodDeclaration methodDeclAbstr = abstractClassDeclaration
+      CallableDeclaration<?> methodDeclAbstr = abstractClassDeclaration
           .addMethod(methodIdentifier)
           .setBody(body)
           .setType(returnType)
-          .setParameters(NodeList.nodeList(variableScope.parameters))
+          .setParameters(NodeList.nodeList(parameters))
           .setPublic(true)
           .setStatic(true)
           .setContracts(contracts);
-
+      annotateMethodDecl(methodDeclAbstr);
     } else {
-      MethodDeclaration methodDeclAbstr = abstractClassDeclaration
+      CallableDeclaration<?> methodDeclAbstr = abstractClassDeclaration
           .addMethod(methodIdentifier)
           .setBody(null)
           .setType(returnType)
-          .setParameters(NodeList.nodeList(variableScope.parameters))
+          .setParameters(NodeList.nodeList(parameters))
           .setPublic(true)
           .setAbstract(true)
           .setContracts(contracts);
+      annotateMethodDecl(methodDeclAbstr);
 
       //TODO: set default value when return type != void
       Statement returnStmt = new ReturnStmt();
@@ -1025,17 +838,26 @@ public class SimpleKeyProviderTranslator {
       BlockStmt blueprintStatement = new BlockStmt(nl);
 
       if (classImpl != null) {
-        MethodDeclaration methodDeclImpl = classImpl
+        CallableDeclaration<?> methodDeclImpl = classImpl
             .addMethod(methodIdentifier)
             .setType(returnType)
-            .setParameters(NodeList.nodeList(variableScope.parameters))
+            .setParameters(NodeList.nodeList(parameters))
             .setBody(blueprintStatement)
             .setPublic(true);
+        annotateMethodDecl(methodDeclImpl);
       }
     }
   }
 
-  Expression translateTerm(
+  protected Type getReturnT(boolean isStatic, VariableScopeManager variableScope) {
+    return variableScope.returnType.orElseGet(VoidType::new);
+  }
+
+  protected List<Parameter> getParameters(VariableScopeManager variableScope) {
+    return variableScope.parameters;
+  }
+
+  private Expression translateTerm(
       Term term,
       VariableTranslator variableScope,
       IndexFab indexFabric) {
@@ -1053,7 +875,7 @@ public class SimpleKeyProviderTranslator {
         t -> this.translateAttributes(t, variableScope, indexFabric));
   }
 
-  Expression translateTermSpecConstant(
+  private Expression translateTermSpecConstant(
       Term.SpecConstant specCons,
       VariableTranslator variableScope,
       IndexFab indexFabric) {
@@ -1062,7 +884,7 @@ public class SimpleKeyProviderTranslator {
     return new BooleanLiteralExpr(false);
   }
 
-  Expression translateTermIdentifierAs(
+  private Expression translateTermIdentifierAs(
       Term.Identifier.IdentifierAs idAs,
       VariableTranslator variableScope,
       IndexFab indexFabric) {
@@ -1071,7 +893,7 @@ public class SimpleKeyProviderTranslator {
     return new BooleanLiteralExpr(false);
   }
 
-  Expression translateTermIdentifierValue(
+  private Expression translateTermIdentifierValue(
       Term.Identifier.IdentifierValue idV,
       VariableTranslator variableScope,
       IndexFab indexFabric) {
@@ -1089,7 +911,7 @@ public class SimpleKeyProviderTranslator {
     });
   }
 
-  Expression translateTermMethodApplication(
+  private Expression translateTermMethodApplication(
       Term.MethodApplication methAppl,
       VariableTranslator variableScope,
       IndexFab indexFabric) {
@@ -1109,7 +931,7 @@ public class SimpleKeyProviderTranslator {
     return trans.getJmlTerm(terms);
   }
 
-  Expression translateTermOld(
+  private Expression translateTermOld(
       Term.Old oldTerm,
       VariableTranslator variableScope,
       IndexFab indexFabric) {
@@ -1121,14 +943,14 @@ public class SimpleKeyProviderTranslator {
         NodeList.nodeList(content));
   }
 
-  Expression translateTermBooleanLiteral(
+  private Expression translateTermBooleanLiteral(
       Term.BooleanLiteral booleanLit,
       VariableTranslator variableScope,
       IndexFab indexFabric) {
     return new BooleanLiteralExpr(booleanLit.value());
   }
 
-  Expression translateTermNumeralLiteral(
+  private Expression translateTermNumeralLiteral(
       Term.NumberLiteral numeralLit,
       VariableTranslator variableScope,
       IndexFab indexFabric) {
@@ -1139,7 +961,7 @@ public class SimpleKeyProviderTranslator {
     return new DoubleLiteralExpr(numeralLit.value());
   }
 
-  Expression translateTermLetBinding(
+  private Expression translateTermLetBinding(
       Term.LetBinding letBind,
       VariableTranslator variableScope,
       IndexFab indexFabric) {
@@ -1148,18 +970,18 @@ public class SimpleKeyProviderTranslator {
     return new BooleanLiteralExpr(false);
   }
 
-  JmlQuantifiedExpr.JmlBinder translateBinder(Quantor quantor) {
+  private JmlQuantifiedExpr.JmlBinder translateBinder(Quantor quantor) {
     return switch (quantor) {
       case Quantor.ALL -> JmlQuantifiedExpr.JmlDefaultBinder.FORALL;
       case Quantor.EXISTS -> JmlQuantifiedExpr.JmlDefaultBinder.EXISTS;
     };
   }
 
-  Expression translateQuantorBinding(
+  private Expression translateQuantorBinding(
       Term.QuantorBinding quantBind,
       VariableTranslator variableScope,
       IndexFab indexFabric) {
-    //TODO: Sort varaibles by type, only create one quantor per type.
+    //TODO: Sort variables by type, only create one quantor per type.
 
     JmlQuantifiedExpr.JmlBinder binder = translateBinder(quantBind.quantor());
     JmlQuantifiedExpr top = null;
@@ -1200,7 +1022,7 @@ public class SimpleKeyProviderTranslator {
     return top;
   }
 
-  Expression translateMatchBinding(
+  private Expression translateMatchBinding(
       Term.MatchBinding matchBind,
       VariableTranslator variableScope,
       IndexFab indexFabric) {
@@ -1209,7 +1031,7 @@ public class SimpleKeyProviderTranslator {
     return new BooleanLiteralExpr(false);
   }
 
-  Expression translateAttributes(
+  private Expression translateAttributes(
       Term.Attributes attributes,
       VariableTranslator variableScope,
       IndexFab indexFabric) {
@@ -1245,6 +1067,173 @@ public class SimpleKeyProviderTranslator {
             DetailLevel.INSTANCE_INVARIANT ->
           Modifier.DefaultKeyword.JML_INSTANCE;
       };
+    }
+  }
+
+  protected record SimpleResult(
+      String packageName,
+      String className,
+      CompilationUnit cu) implements TranslationResult {
+    @Override
+    public Optional<String> extendSubDirectory() {
+      return Optional.ofNullable(packageName);
+    }
+
+    public String fileName() {
+      return className;
+    }
+
+    public String fileEnding() {
+      return ".java";
+    }
+
+    public void writeTo(Writer writer) throws IOException {
+      PrinterConfiguration config = new DefaultPrinterConfiguration();
+      DefaultPrettyPrinter printer = new DefaultPrettyPrinter(config);
+      writer.write(printer.print(cu));
+    }
+  }
+
+  private record SortTranslator(
+      Map<String, TypeTranslation> map) implements TypeTranslation.TypeTranslator {
+    public void store(TypeTranslation trans) {
+      //TODO: Do error check if translation is ambigous
+      this.map().put(trans.getClibSort().getName(), trans);
+    }
+
+    public TypeTranslation translate(Sort sort) {
+      TypeTranslation translation = this.map().get(sort.getName());
+      if (translation == null) {
+        //TODO: Report proper error
+        System.err.println(String.format("ERROR: The type '%s' could not be translated.", sort));
+        return null;
+      }
+      return translation;
+    }
+  }
+
+  private record FuncTranslator(
+      Map<String, FuncTranslation> map) implements FuncTranslation.FuncTranslator {
+
+    public void store(List<FuncTranslation> translations) {
+      //TODO: Error check if ambigous
+      for (FuncTranslation trans : translations) {
+        this.map().put(trans.getClibIdentifier().identifier().identifier(), trans);
+      }
+    }
+
+    public FuncTranslation translate(Term.Identifier.IdentifierValue identifier) {
+      FuncTranslation t = this.map().get(identifier.identifier().identifier());
+      if (t == null) {
+        System.err.println(String.format("ERROR: Translations for the identifier '%s' not found.", identifier));
+        return null;
+      }
+      return t;
+    }
+  }
+
+  //TODO: This is just a most simple implementation, might be reworked, but serves it purpose for now
+  protected final class VariableScopeManager implements VariableScope.VariableTranslator {
+
+    public Map<String, VariableScope> map = new HashMap<>();
+    public Optional<Type> returnType = Optional.empty();
+    public Optional<Type> ownerType = Optional.empty();
+    public List<Parameter> parameters = new ArrayList<>();
+
+    public void add(SortedVar sortedVar) {
+      TypeTranslation t = sortTranslator.translate(sortedVar.sort());
+      VariableScopeElement el = new VariableScopeElement(
+          sortedVar.symbol(),
+          new NameExpr(sortedVar.symbol().identifier()),
+          sortedVar.sort(),
+          t.getJmlType(sortedVar.sort()),
+          t.hasFootprint());
+      map.put(el.getClibSymbol().identifier(), el);
+    }
+
+    public void remove(SortedVar sortedVar) {
+      map.remove(sortedVar.symbol().identifier());
+    }
+
+    public void add(Formal formal) {
+      TypeTranslation t = sortTranslator.translate(formal.sort());
+      Symbol s = new Symbol(formal.identifier().identifier());
+      //TODO: find better way for result
+      if (formal.identifier().identifier().equals("result")) {
+        VariableScopeElement el = new VariableScopeElement(
+            s,
+            new NameExpr("\\result"),
+            formal.sort(),
+            t.getJmlType(formal.sort()),
+            t.hasFootprint());
+        this.returnType = Optional.ofNullable(t.getJmlType(formal.sort()));
+        map.put(el.getClibSymbol().identifier(), el);
+      } else if (formal.identifier().identifier().equals("this")) {
+        this.ownerType = Optional.ofNullable(t.getJmlType(formal.sort()));
+        VariableScopeElement el = new VariableScopeElement(
+            s,
+            new ThisExpr(),
+            formal.sort(),
+            t.getJmlType(formal.sort()),
+            t.hasFootprint());
+        map.put(el.getClibSymbol().identifier(), el);
+      } else {
+        VariableScopeElement el = new VariableScopeElement(
+            s,
+            new NameExpr(formal.identifier().identifier()),
+            formal.sort(),
+            t.getJmlType(formal.sort()),
+            t.hasFootprint());
+        map.put(el.getClibSymbol().identifier(), el);
+        parameters.add(new Parameter(
+            t.getJmlType(formal.sort()),
+            new SimpleName(formal.identifier().identifier())));
+      }
+    }
+
+    public Optional<VariableScope> translate(Symbol symbol) {
+      return Optional.ofNullable(map.get(symbol.identifier()));
+    }
+  }
+
+  private record VariableScopeElement(
+      Symbol symbol,
+      Expression expression,
+      Sort clibResultType,
+      Type jmlResultType,
+      boolean hasFootprint) implements VariableScope {
+    public Symbol getClibSymbol() {
+      return symbol;
+    }
+
+    public Expression getJmlTerm() {
+      return expression;
+    }
+
+    public Sort getClibResultType() {
+      return clibResultType;
+    }
+
+    public Type getJmlResultType() {
+      return jmlResultType;
+    }
+
+    public boolean hasFootprint() {
+      return hasFootprint;
+    }
+  }
+
+  private final class IndexFab implements TypeTranslation.IndexFabric {
+    private char i = 'a';
+
+    public SimpleName getNextIndex() {
+      char res = i;
+      i++;
+      if (i > 'z') {
+        //TODO: report Error
+        i = 'a';
+      }
+      return new SimpleName(String.valueOf(res));
     }
   }
 }
