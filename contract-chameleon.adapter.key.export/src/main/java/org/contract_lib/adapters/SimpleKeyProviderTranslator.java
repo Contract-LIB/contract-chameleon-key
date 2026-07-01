@@ -23,44 +23,26 @@ import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.CallableDeclaration;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.FieldDeclaration;
-import com.github.javaparser.ast.body.MethodDeclaration;
-import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.comments.LineComment;
 import com.github.javaparser.ast.stmt.ReturnStmt;
-import com.github.javaparser.ast.stmt.Behavior;
 import com.github.javaparser.ast.stmt.BlockStmt;
 import com.github.javaparser.ast.stmt.EmptyStmt;
 import com.github.javaparser.ast.stmt.Statement;
 
 import com.github.javaparser.ast.expr.SimpleName;
 import com.github.javaparser.ast.expr.Expression;
-import com.github.javaparser.ast.expr.BinaryExpr;
-import com.github.javaparser.ast.expr.BooleanLiteralExpr;
 import com.github.javaparser.ast.expr.FieldAccessExpr;
 import com.github.javaparser.ast.expr.ThisExpr;
 import com.github.javaparser.ast.expr.NameExpr;
 import com.github.javaparser.ast.expr.ObjectCreationExpr;
 import com.github.javaparser.ast.expr.MethodCallExpr;
-import com.github.javaparser.ast.expr.DoubleLiteralExpr;
-import com.github.javaparser.ast.expr.EnclosedExpr;
-import com.github.javaparser.ast.type.Type;
-import com.github.javaparser.ast.type.VoidType;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 
 import com.github.javaparser.ast.jml.body.JmlFieldDeclaration;
 import com.github.javaparser.ast.jml.body.JmlClassAccessibleDeclaration;
 import com.github.javaparser.ast.jml.body.JmlClassExprDeclaration;
 
-import com.github.javaparser.ast.jml.clauses.JmlClauseKind;
-import com.github.javaparser.ast.jml.clauses.JmlSimpleExprClause;
-import com.github.javaparser.ast.jml.clauses.JmlContract;
-import com.github.javaparser.ast.jml.clauses.JmlClause;
-
-import com.github.javaparser.ast.jml.expr.JmlQuantifiedExpr;
 import com.github.javaparser.ast.nodeTypes.NodeWithModifiers;
-
-import static com.github.javaparser.ast.jml.clauses.JmlClauseKind.REQUIRES;
-import static com.github.javaparser.ast.jml.clauses.JmlClauseKind.ENSURES;
 
 import com.github.javaparser.printer.configuration.DefaultPrinterConfiguration;
 import com.github.javaparser.printer.configuration.PrinterConfiguration;
@@ -73,16 +55,13 @@ import org.contract_lib.lang.contract_lib.ast.Abstraction;
 import org.contract_lib.lang.contract_lib.ast.Constructor;
 import org.contract_lib.lang.contract_lib.ast.Contract;
 import org.contract_lib.lang.contract_lib.ast.Term;
+import org.contract_lib.lang.contract_lib.ast.Term.Identifier.IdentifierValue;
 import org.contract_lib.lang.contract_lib.tools.JavaMethodSignaturExtractor;
 import org.contract_lib.lang.contract_lib.ast.SelectorDec;
 import org.contract_lib.lang.contract_lib.ast.Symbol;
-import org.contract_lib.lang.contract_lib.ast.Sort;
-import org.contract_lib.lang.contract_lib.ast.Formal;
-import org.contract_lib.lang.contract_lib.ast.PrePostPair;
-import org.contract_lib.lang.contract_lib.ast.SortedVar;
-import org.contract_lib.lang.contract_lib.ast.Quantor;
-import org.contract_lib.lang.contract_lib.ast.ArgumentMode;
 import org.contract_lib.lang.contract_lib.ast.DatatypeDec;
+
+import org.contract_lib.lang.contract_lib.modifier.IdentifierSubstitution;
 
 import org.contract_lib.adapters.translations.TypeTranslation;
 import org.contract_lib.adapters.translations.TypeTranslator;
@@ -92,13 +71,9 @@ import org.contract_lib.adapters.translations.TermTranslator;
 import org.contract_lib.adapters.translations.ContractTranslation;
 import org.contract_lib.adapters.translations.ContractTranslator;
 import org.contract_lib.adapters.translations.FuncProvider;
-import org.contract_lib.adapters.translations.FuncTranslation;
 import org.contract_lib.adapters.translations.FuncTranslator;
 import org.contract_lib.adapters.translations.KeyTranslations;
 import org.contract_lib.adapters.translations.IndexFabric;
-import org.contract_lib.adapters.translations.VariableScope;
-import org.contract_lib.adapters.translations.VariableScopeManager;
-import org.contract_lib.adapters.translations.VariableTranslator;
 import org.contract_lib.adapters.translations.default_translators.DefaultContractTranslator;
 import org.contract_lib.adapters.translations.default_translators.DefaultFuncTranslator;
 import org.contract_lib.adapters.translations.default_translators.DefaultIndexFabric;
@@ -113,7 +88,10 @@ public class SimpleKeyProviderTranslator {
 
   private static final String IMPLEMENTATION_SUFFIX = "Impl";
   private static String FOOTPRINT_NAME = "fp";
-  private static String RESULT_LABEL = "\\result";
+  private static String RESULT_LABEL_CONTRACT_LIB = "result";
+  private static String RESULT_LABEL_JML = "\\result";
+  private static String THIS_LABEL_CONTRACT_LIB = "this";
+  private static String THIS_LABEL_JML = "this";
 
   private ChameleonMessageManager messageManager;
 
@@ -181,7 +159,11 @@ public class SimpleKeyProviderTranslator {
         this.sortTranslator,
         this.termTranslator,
         FOOTPRINT_NAME,
-        RESULT_LABEL);
+        RESULT_LABEL_CONTRACT_LIB,
+        RESULT_LABEL_JML,
+        THIS_LABEL_CONTRACT_LIB,
+        THIS_LABEL_JML,
+        this.messageManager);
   }
 
   public List<TranslationResult> translateContractLibAst(
@@ -506,6 +488,13 @@ public class SimpleKeyProviderTranslator {
         returnStmt.setLineComment("NOTE: This should be never called, as it is only the interface!");
       } else {
 
+        IdentifierSubstitution substitution = new IdentifierSubstitution(
+            RESULT_LABEL_CONTRACT_LIB,
+            THIS_LABEL_CONTRACT_LIB,
+            messageManager);
+        Contract constructorContract = substitution.applyContract(contract);
+        ContractTranslation constructorContractTranslation = contractTranslator.translate(constructorContract);
+
         EmptyStmt em = new EmptyStmt();
 
         em.setLineComment(methodSignaturExtractor.getDefaultMethodBody());
@@ -514,9 +503,9 @@ public class SimpleKeyProviderTranslator {
         BlockStmt body = new BlockStmt(nl);
 
         CallableDeclaration<?> constructorDecl = classImpl.addConstructor()
-            .setParameters(NodeList.nodeList(contractTranslation.parameters()))
+            .setParameters(NodeList.nodeList(constructorContractTranslation.parameters()))
             .setBody(body)
-            .setContracts(contractTranslation.jmlContracts());
+            .setContracts(constructorContractTranslation.jmlContracts());
         annotateMethodDecl(constructorDecl);
 
         ObjectCreationExpr obc = new ObjectCreationExpr(
@@ -524,7 +513,7 @@ public class SimpleKeyProviderTranslator {
             new ClassOrInterfaceType(
                 null,
                 classImpl.getNameAsString()),
-            contractTranslation.arguments());
+            constructorContractTranslation.arguments());
         returnStmt = new ReturnStmt(obc);
       }
 
@@ -571,11 +560,6 @@ public class SimpleKeyProviderTranslator {
         annotateMethodDecl(methodDeclImpl);
       }
     }
-  }
-
-  private record ExpressionPair(
-      Expression pre,
-      Expression post) {
   }
 
   <N extends Node & NodeWithModifiers<N>> N addModifierIfRequired(DetailLevel modifier, N declaration) {

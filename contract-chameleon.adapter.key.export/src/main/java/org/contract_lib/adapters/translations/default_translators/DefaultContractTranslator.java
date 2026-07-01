@@ -10,6 +10,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.contract_lib.adapters.translations.TermTranslator;
+import org.checkerframework.checker.units.qual.m;
 import org.contract_lib.adapters.translations.ContractTranslation;
 import org.contract_lib.adapters.translations.ContractTranslator;
 import org.contract_lib.adapters.translations.IndexFabric;
@@ -18,6 +19,9 @@ import org.contract_lib.adapters.translations.VariableScope;
 import org.contract_lib.adapters.translations.VariableScopeElement;
 import org.contract_lib.adapters.translations.VariableScopeManager;
 import org.contract_lib.adapters.translations.VariableTranslator;
+import org.contract_lib.contract_chameleon.error.ChameleonError;
+import org.contract_lib.contract_chameleon.error.ChameleonMessageManager;
+import org.contract_lib.contract_chameleon.error.ChameleonReportable;
 import org.contract_lib.lang.contract_lib.ast.ArgumentMode;
 import org.contract_lib.lang.contract_lib.ast.Contract;
 import org.contract_lib.lang.contract_lib.ast.Formal;
@@ -43,21 +47,34 @@ import com.github.javaparser.ast.type.VoidType;
 
 public class DefaultContractTranslator implements ContractTranslator {
 
+  ChameleonMessageManager messageManager;
+
   private final TypeTranslator typeTranslator;
   private final TermTranslator termTranslator;
 
   private final String footprintName;
-  private final String resultLable;
+  private final String jmlResultLabel;
+  private final String contractLibResultLabel;
+  private final String contractLibThisLabel;
+  private final String jmlThisLabel;
 
   public DefaultContractTranslator(
       TypeTranslator typeTranslator,
       TermTranslator termTranslator,
       String footprintName,
-      String resultLable) {
+      String contractLibResultLabel,
+      String jmlResultLabel,
+      String contractLibThisLabel,
+      String jmlThisLabel,
+      ChameleonMessageManager messageManager) {
     this.typeTranslator = typeTranslator;
     this.termTranslator = termTranslator;
     this.footprintName = footprintName;
-    this.resultLable = resultLable;
+    this.contractLibResultLabel = contractLibResultLabel;
+    this.jmlResultLabel = jmlResultLabel;
+    this.contractLibThisLabel = contractLibThisLabel;
+    this.jmlThisLabel = jmlThisLabel;
+    this.messageManager = messageManager;
   }
 
   public ContractTranslation translate(Contract contract) {
@@ -108,6 +125,7 @@ public class DefaultContractTranslator implements ContractTranslator {
     clauses.addAll(disPreClause);
     clauses.add(postClause);
     clauses.addAll(disPostClause);
+
     //add ensures clauses for new created object (invariant, fresh) 
     objectCreated(contract.formals(), variableScope).ifPresent(clauses::addAll);
     //allows all parameters that are `INOUT`, to have new objects created in their footprint
@@ -316,21 +334,43 @@ public class DefaultContractTranslator implements ContractTranslator {
     return formals.stream()
         .filter((f) -> isReference(f, variableScope))
         .filter((f) -> ArgumentMode.OUT.equals(f.argumentMode()))
-        .map(Formal::identifier)
-        .map(variableScope::translate)
+        //.map(Formal::identifier)
+        //.map(variableScope::translate)
         .findAny()
-        .map((f) -> List.of(
-            // Create new object clause
-            new JmlSimpleExprClause(ENSURES, null,
-                NodeList.nodeList(),
-                new MethodCallExpr(null, new SimpleName("\\fresh"),
-                    NodeList.nodeList(new FieldAccessExpr(new NameExpr(resultLable), footprintName)))),
-            // Ensure that invariants hold for created object
-            new JmlSimpleExprClause(ENSURES, null,
-                NodeList.nodeList(),
-                new MethodCallExpr(null, new SimpleName("\\invariant_for"),
-                    NodeList.nodeList(new NameExpr(resultLable))))));
+        .map((f) -> {
 
+          String resultLable = getObjectCreatedLabel(f);
+          return List.of(
+              // Create new object clause
+              new JmlSimpleExprClause(ENSURES, null,
+                  NodeList.nodeList(),
+                  new MethodCallExpr(null, new SimpleName("\\fresh"),
+                      NodeList.nodeList(new FieldAccessExpr(new NameExpr(resultLable), footprintName)))),
+              // Ensure that invariants hold for created object
+              new JmlSimpleExprClause(ENSURES, null,
+                  NodeList.nodeList(),
+                  new MethodCallExpr(null, new SimpleName("\\invariant_for"),
+                      NodeList.nodeList(new NameExpr(resultLable)))));
+        });
+  }
+
+  private String getObjectCreatedLabel(Formal formal) {
+    if (formal.identifier().identifier().equals(this.contractLibResultLabel)) {
+      return this.jmlResultLabel;
+    } else if (formal.identifier().identifier().equals(this.contractLibThisLabel)) {
+      return this.jmlThisLabel;
+    } else {
+
+      this.messageManager.report(new ChameleonReportable() {
+        @Override
+        public String getMessage() {
+          return String.format("Only `result` is allowed as identifier for an out parameter. Got: %s",
+              formal.identifier().identifier());
+        }
+      });
+
+      return this.jmlResultLabel;
+    }
   }
 
   protected ExpressionPair translateExprPair(PrePostPair pair, VariableTranslator scope) {

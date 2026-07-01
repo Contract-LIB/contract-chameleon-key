@@ -6,6 +6,8 @@ init = """
 """
 body = """
 
+    //@ public invariant this.c == this.absVal;
+
     private int c;
 """
 value = """
@@ -15,18 +17,28 @@ value = """
 increment = """
 
     this.c += 1;
+
+
+    //@ set absVal = this.absVal + 1;
 """
 decrement = """
 
     this.c -= 1;
+
+    //@ set absVal = this.absVal - 1;
 """
 set = """
 
     this.c = value;
+
+
+    //@ set absVal = value;
 """
 reset = """
 
     this.c = 0;
+
+    //@ set absVal = 0;
 """
 file = ""
 
