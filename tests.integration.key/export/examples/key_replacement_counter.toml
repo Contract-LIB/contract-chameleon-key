@@ -49,11 +49,19 @@ package example;
 
 public class _Client {
 
+    /*@  normal_behavior
+        requires true;
+        ensures true;
+        */
   public static void main(String[] args) 
   {
     testCounter();
   }
 
+    /*@  normal_behavior
+        requires true;
+        ensures true;
+        */
   public static void testCounter() 
   {
     Counter c1 = Counter.init();

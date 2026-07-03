@@ -46,7 +46,7 @@
     )
     ((
       (distinct (absVal this) seq.empty)
-      (= (absVal this) (seq.extract (old (absVal this)) 0 (- (seq.len (old (absVal this))) 1))
+      (= (absVal this) (seq.extract (old (absVal this)) 0 (- (seq.len (old (absVal this))) 1)))
     ))
 )
 

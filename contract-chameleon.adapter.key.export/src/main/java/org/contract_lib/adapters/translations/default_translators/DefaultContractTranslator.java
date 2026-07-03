@@ -1,5 +1,6 @@
 package org.contract_lib.adapters.translations.default_translators;
 
+import static com.github.javaparser.ast.jml.clauses.JmlClauseKind.ASSIGNABLE;
 import static com.github.javaparser.ast.jml.clauses.JmlClauseKind.ENSURES;
 import static com.github.javaparser.ast.jml.clauses.JmlClauseKind.REQUIRES;
 
@@ -7,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.jar.Attributes.Name;
 import java.util.stream.Collectors;
 
 import org.contract_lib.adapters.translations.TermTranslator;
@@ -36,7 +38,9 @@ import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.FieldAccessExpr;
 import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.ast.expr.NameExpr;
+import com.github.javaparser.ast.expr.NullLiteralExpr;
 import com.github.javaparser.ast.expr.SimpleName;
+import com.github.javaparser.ast.expr.BinaryExpr.Operator;
 import com.github.javaparser.ast.jml.clauses.JmlClause;
 import com.github.javaparser.ast.jml.clauses.JmlClauseKind;
 import com.github.javaparser.ast.jml.clauses.JmlContract;
@@ -119,6 +123,8 @@ public class DefaultContractTranslator implements ContractTranslator {
         contract.formals(),
         variableScope);
 
+    Optional<JmlClause> strictlyNothing = strictlyNothing(contract.formals(), variableScope);
+
     NodeList<JmlClause> clauses = new NodeList<>();
 
     clauses.add(preClause);
@@ -137,6 +143,8 @@ public class DefaultContractTranslator implements ContractTranslator {
       clauses.addAll(accessibleClause);
       clauses.addAll(assignableClause);
     }
+
+    strictlyNothing.ifPresent(clauses::add);
 
     JmlContract jmlContract = new JmlContract()
         .setBehavior(Behavior.NORMAL)
@@ -250,6 +258,25 @@ public class DefaultContractTranslator implements ContractTranslator {
     return assignable;
   }
 
+  protected Optional<JmlClause> strictlyNothing(
+      List<Formal> formals,
+      VariableTranslator variableScope) {
+
+    if (formals
+        .stream()
+        .filter((f) -> this.isAssignable(f.argumentMode()))
+        .filter((f) -> this.isReference(f, variableScope))
+        .findAny()
+        .isEmpty()) {
+      return Optional.of(
+          new JmlSimpleExprClause(ASSIGNABLE, null, NodeList.nodeList(),
+              new NameExpr(new SimpleName("\\strictly_nothing"))));
+    } else {
+      return Optional.empty();
+    }
+
+  }
+
   protected List<JmlClause> disjuntClauses(
       JmlClauseKind kind,
       List<Formal> formals,
@@ -329,38 +356,24 @@ public class DefaultContractTranslator implements ContractTranslator {
             createUnionClause(expressions)));
   }
 
-  protected Optional<List<JmlClause>> objectCreated(List<Formal> formals, VariableTranslator variableScope) {
+  // - Object Creation
 
+  protected Optional<List<JmlClause>> objectCreated(List<Formal> formals, VariableTranslator variableScope) {
     return formals.stream()
         .filter((f) -> isReference(f, variableScope))
         .filter((f) -> ArgumentMode.OUT.equals(f.argumentMode()))
         //.map(Formal::identifier)
         //.map(variableScope::translate)
         .findAny()
-        .map((f) -> {
-
-          String resultLable = getObjectCreatedLabel(f);
-          return List.of(
-              // Create new object clause
-              new JmlSimpleExprClause(ENSURES, null,
-                  NodeList.nodeList(),
-                  new MethodCallExpr(null, new SimpleName("\\fresh"),
-                      NodeList.nodeList(new FieldAccessExpr(new NameExpr(resultLable), footprintName)))),
-              // Ensure that invariants hold for created object
-              new JmlSimpleExprClause(ENSURES, null,
-                  NodeList.nodeList(),
-                  new MethodCallExpr(null, new SimpleName("\\invariant_for"),
-                      NodeList.nodeList(new NameExpr(resultLable)))));
-        });
+        .map(this::getObjectCreatedLabel);
   }
 
-  private String getObjectCreatedLabel(Formal formal) {
+  private List<JmlClause> getObjectCreatedLabel(Formal formal) {
     if (formal.identifier().identifier().equals(this.contractLibResultLabel)) {
-      return this.jmlResultLabel;
+      return staticObjectCreated();
     } else if (formal.identifier().identifier().equals(this.contractLibThisLabel)) {
-      return this.jmlThisLabel;
+      return constructorObjectCreated();
     } else {
-
       this.messageManager.report(new ChameleonReportable() {
         @Override
         public String getMessage() {
@@ -369,9 +382,46 @@ public class DefaultContractTranslator implements ContractTranslator {
         }
       });
 
-      return this.jmlResultLabel;
+      return List.of();
     }
   }
+
+  private List<JmlClause> constructorObjectCreated() {
+    NameExpr resultLabel = new NameExpr(jmlThisLabel);
+    return List.of(
+        ensuresInvariantClause(resultLabel),
+        ensuresFreshClause(resultLabel));
+  }
+
+  private List<JmlClause> staticObjectCreated() {
+    NameExpr resultLabel = new NameExpr(jmlResultLabel);
+    return List.of(
+        ensuresInvariantClause(resultLabel),
+        ensuresFreshClause(resultLabel),
+        ensuresNotNullClause(resultLabel));
+  }
+
+  private JmlClause ensuresNotNullClause(NameExpr name) {
+    return new JmlSimpleExprClause(ENSURES, null,
+        NodeList.nodeList(),
+        new BinaryExpr(new NullLiteralExpr(), name, Operator.NOT_EQUALS));
+  }
+
+  private JmlClause ensuresInvariantClause(NameExpr name) {
+    return new JmlSimpleExprClause(ENSURES, null,
+        NodeList.nodeList(),
+        new MethodCallExpr(null, new SimpleName("\\invariant_for"),
+            NodeList.nodeList(name)));
+  }
+
+  private JmlClause ensuresFreshClause(NameExpr name) {
+    return new JmlSimpleExprClause(ENSURES, null,
+        NodeList.nodeList(),
+        new MethodCallExpr(null, new SimpleName("\\fresh"),
+            NodeList.nodeList(new FieldAccessExpr(name, footprintName))));
+  }
+
+  // - Contract Pair Translation
 
   protected ExpressionPair translateExprPair(PrePostPair pair, VariableTranslator scope) {
     IndexFabric preFab = new DefaultIndexFabric();
