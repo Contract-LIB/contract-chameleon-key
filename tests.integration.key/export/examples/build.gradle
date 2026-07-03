@@ -5,7 +5,7 @@ def tests = []
 // - Counter example
 
 def examples_counter = "examples-counter"
-def counter_clib = "./export/examples/Counter.clib"
+def counter_clib = "./export/examples/counter.clib"
 def counter_replace = "./export/examples/key_replacement_counter.toml"
 
 
@@ -16,21 +16,6 @@ createKeYPipeline(
   counter_replace,
   ["example.Counter[example.Counter::init()].JML normal_behavior operation contract.0"]
 ).each { t -> tests << t }
-
-/*
-
-    /*@  normal_behavior
-        requires true;
-        ensures (\result != null);
-        ensures (\result.absVal) == (0);
-        ensures \fresh(\result.fp);
-        ensures \invariant_for(\result);
-        ensures \new_elems_fresh(\result.fp);
-        
-    public static Counter init() {
-        return new CounterImpl();
-    }
-*/
 
 createKeYPipeline(
   examples_counter,
@@ -44,9 +29,16 @@ createKeYPipeline(
 // - Stack example
 
 def examples_stack = "examples-stack"
-def stack_clib = "./export/examples/Stack.clib"
+def stack_clib = "./export/examples/stack.clib"
 def stack_replace = "./export/examples/key_replacement_stack.toml"
 
+createKeYPipeline(
+  examples_stack,
+  key_provider,
+  stack_clib,
+  stack_replace,
+  []
+).each { t -> tests << t }
 
 createKeYPipeline(
   examples_stack,
@@ -55,20 +47,10 @@ createKeYPipeline(
   stack_replace,
   ["example.Stack[example.Stack::init()].JML normal_behavior operation contract.0"]
 ).each { t -> tests << t }
-
-/*
-createKeYPipeline(
-  examples_stack,
-  key_provider,
-  stack_clib,
-  stack_replace 
-).each { t -> tests << t }
-*/
-
 // Full run
 tasks.register('it-examples-key') {
     group = "Integration Tests"
     description = "Run all task of examples integration tests"
 
-    dependsOn tests 
+    dependsOn tests
 }

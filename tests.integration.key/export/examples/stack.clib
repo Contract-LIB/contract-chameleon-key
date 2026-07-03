@@ -23,7 +23,10 @@
       (result (out Int))
     )
     ((
-      (distinct seq.empty (absVal this)) 
+      (
+        and (distinct seq.empty (absVal this)) 
+        (<= (seq.len (absVal this)) 1000)
+      )
       (= result (seq.nth (absVal this) (- (seq.len (absVal this)) 1)))
     ))
 )
@@ -45,7 +48,10 @@
       (this (inout Stack))
     )
     ((
-      (distinct (absVal this) seq.empty)
+      (
+        and (distinct seq.empty (absVal this)) 
+        (<= (seq.len (absVal this)) 1000)
+      )
       (= (absVal this) (seq.extract (old (absVal this)) 0 (- (seq.len (old (absVal this))) 1)))
     ))
 )

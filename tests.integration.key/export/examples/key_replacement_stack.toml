@@ -3,26 +3,52 @@ body = """
 
     private int[] comp;
     private int size;
-    private final int MAX_SIZE = 1000;"""
+    private final int MAX_SIZE = 1000;
+
+    //@ public invariant this.absVal == (\\seq_def int i; 0; this.size; this.comp[i]);
+    //@ public invariant \\subset(this.comp[*], this.fp);
+    //@ public invariant this.size == this.absVal.length;
+    //@ public invariant this.size >= 0 && this.size <= this.comp.length;
+    //@ public invariant this.comp.length == 1000;
+    //@ public invariant this.comp != null;
+
+"""
 
 init = """
 
       this.comp = new int[MAX_SIZE];
       this.size = 0;
 
-      //@ set fp = \\all_fields(this);
+      //@ set fp = \\set_union(\\all_fields(this), this.comp[*]);
+      //@ set absVal = \\seq_empty;
 """
 
-peek = "return this.comp[this.size-1];"
+peek = """
+
+  return this.comp[this.size-1];
+"""
 
 push = """
 
       this.comp[this.size] = v;
-      this.size++;"""
+      this.size++;
+    
+//@ set absVal = \\seq_concat(\\old(absVal), \\seq_singleton(v));
+"""
 
-pop = "this.size--;"
+pop = """
+  
+    this.size--;
 
-reset = "this.size = 0;"
+    //Note: don't use dl_seqRemove!
+    //@ set absVal = \\seq_sub(\\old(absVal), 0, this.size);
+"""
+
+reset = """
+
+      this.size = 0;
+      //@ set absVal = \\seq_empty;
+"""
 
 file = ""
 
@@ -33,31 +59,48 @@ package example;
 
 public class _Client {
 
+
+  /*@ normal_behavior
+    requires true;
+    ensures true;
+    */
   public static void main(String[] args) 
   {
     testStack();
   }
 
+  /*@ normal_behavior
+    requires true;
+    ensures true;
+    */
   public static void testStack() 
   {
     Stack c1 = Stack.init();
     c1.push(0);
     
     int r1 = c1.peek();
+    //@ assert r1 == 0;
 
     c1.push(1);
 
     int r2 = c1.peek();
+    //@ assert r2 == 1;
 
     c1.push(2);
 
     int r3 = c1.peek();
+    //@ assert r3 == 2;
 
     c1.pop();
 
     int r4 = c1.peek();
+    //@ assert r4 == 1;
 
     c1.reset();
+    c1.push(3);
+
+    int r5 = c1.peek();
+    //@ assert r5 == 3;
   }
 }
 """

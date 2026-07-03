@@ -49,35 +49,40 @@ package example;
 
 public class _Client {
 
-    /*@  normal_behavior
-        requires true;
-        ensures true;
-        */
+  /*@ normal_behavior
+    requires true;
+    ensures true;
+    */
   public static void main(String[] args) 
   {
     testCounter();
   }
 
-    /*@  normal_behavior
-        requires true;
-        ensures true;
-        */
+  /*@ normal_behavior
+    requires true;
+    ensures true;
+  */
   public static void testCounter() 
   {
     Counter c1 = Counter.init();
     int r1 = c1.value();
+    //@ assert r1 == 0;
 
     c1.increment();
     int r2 = c1.value();
+    //@ assert r2 == 1;
 
     c1.decrement();
     int r3 = c1.value();
+    //@ assert r3 == 0;
 
     c1.set(10);
     int r4 = c1.value();
+    //@ assert r4 == 10;
 
     c1.reset();
     int r5 = c1.value();
+    //@ assert r5 == 0;
   }
 }
 """
