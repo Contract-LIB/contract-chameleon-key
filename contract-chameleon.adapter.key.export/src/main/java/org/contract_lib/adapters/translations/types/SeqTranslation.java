@@ -28,7 +28,9 @@ import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.jml.expr.JmlQuantifiedExpr;
 import com.github.javaparser.ast.jml.expr.JmlMultiCompareExpr;
 
+import org.contract_lib.adapters.translations.IndexFabric;
 import org.contract_lib.adapters.translations.TypeTranslation;
+import org.contract_lib.adapters.translations.TypeTranslator;
 import org.contract_lib.lang.contract_lib.ast.Sort;
 
 import org.contract_lib.lang.key.ast.KeySort;
@@ -57,8 +59,8 @@ public class SeqTranslation implements TypeTranslation {
   public Optional<Expression> getFootprintInvariant(
       Expression field,
       Sort sort,
-      TypeTranslation.TypeTranslator translator,
-      TypeTranslation.IndexFabric fab) {
+      TypeTranslator translator,
+      IndexFabric fab) {
     Sort sortOfPar = getTypeOfParameter(sort).get();
     TypeTranslation translationForParameter = translator.translate(sortOfPar);
 
@@ -112,8 +114,8 @@ public class SeqTranslation implements TypeTranslation {
   public List<Expression> getHelper(
       Expression field, //The field is of the type given in sort Seq T
       Sort sort,
-      TypeTranslation.TypeTranslator translator,
-      TypeTranslation.IndexFabric fab) {
+      TypeTranslator translator,
+      IndexFabric fab) {
     //TODO: Do proper unwrapping
     Sort sortOfPar = getTypeOfParameter(sort).get();
 

@@ -8,7 +8,6 @@ import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import org.contract_lib.adapters.translations.terms.ImportTermTranslator;
-import org.contract_lib.adapters.translations.types.ImportTypeTranslator;
 import org.contract_lib.lang.contract_lib.ast.ArgumentMode;
 import org.contract_lib.lang.contract_lib.ast.Contract;
 import org.contract_lib.lang.contract_lib.ast.Formal;
@@ -54,7 +53,7 @@ public final class ClassMethodContractTranslation implements ImportContractTrans
       return Optional.empty();
     }
 
-    Optional<JmlContract> cl = methodDeclaration.contracts().getFirst();
+    Optional<JmlContract> cl = Optional.ofNullable(methodDeclaration.contracts().getFirst());
     if (cl.isEmpty()) {
       System.err.println("At least one contract is required per method.");
       return Optional.empty();

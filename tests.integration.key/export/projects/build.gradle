@@ -1,0 +1,34 @@
+
+// List to store all creatd tasks
+def tests = []
+
+// - RB-Tree
+
+def examples_counter = "projects-rbtree"
+def counter_clib = "./export/projects/rbtree.clib"
+def counter_replace = "./export/projects/java_replacement_rbtree.toml"
+
+/*
+createVerifastPipeline(
+  examples_counter,
+  verifast_applicant,
+  counter_clib,
+  counter_replace
+).each { t -> tests << t }
+
+createVerifastPipeline(
+  examples_counter,
+  verifast_provider,
+  counter_clib,
+  counter_replace
+).each { t -> tests << t }
+*/
+
+
+// - Full run
+tasks.register('it-projects-key') {
+    group = "Integration Tests"
+    description = "Run all task of examples integration tests"
+
+    dependsOn tests 
+}

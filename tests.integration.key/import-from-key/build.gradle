@@ -1,0 +1,19 @@
+apply from: "functions.gradle" 
+apply from: "tools.gradle" 
+apply from: "key-ci.gradle" 
+
+def mode = "OVERWRITE"
+def log = "INFO"
+
+// - Integration test specifications
+
+runIntegrationTest("help-core", ["--help"])
+
+// KeY Import
+
+
+runIntegrationTest("key-import-examples-counter", ["key-import", "./import-from-key/examples/_counter/"])
+runIntegrationTest("key-import-examples-stack", ["key-import", "./import-from-key/examples/_stack/"])
+
+runIntegrationTest("key-import-features", ["key-import", "./import-from-key/features/"])
+runIntegrationTest("key-import-theories", ["key-import", "./import-from-key/theories/"])

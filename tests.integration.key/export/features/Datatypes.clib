@@ -1,0 +1,83 @@
+
+(declare-datatypes
+  (
+   (Test 0)
+  )
+  ((
+    (cons_a ) 
+    (cons_b (test_a Test) )
+    (cons_c (test_b Test) (test_c Bool)) 
+    (cons_d (test_d (Seq Int)) (test_e BoundInt) (test_f Test)) 
+  ))
+)
+
+(declare-datatypes
+  (
+    (AdtTestA 0)
+    ;(AdtTestB 0)
+    ;(AdtTestC 0)
+  )
+  (
+    (
+      (AdtTestConsA(a Int) (b AdtTestA))
+      (AdtTestConsB)
+    )
+    ;((AdtTestConsC))
+    ;((AdtTestConsD))
+  )
+)
+
+(declare-abstractions
+  (
+    (example_test_adt.AdtWrapper 0)
+  )
+  (
+    ((Wrapper (adtTestA AdtTestA) (adtTestB AdtTestA) (adtTestC AdtTestA)))
+  )
+)
+
+; - Initializers
+(define-contract example_test_adt.AdtWrapper.init
+  (
+   (result (out AdtWrapper))
+   )
+  ((
+    true
+    (and 
+      (= (adtTestA result) (AdtTestConsA 0 (adtTestA result)))
+      (= (adtTestB result) AdtTestConsB)
+      (= (adtTestC result) AdtTestConsB)
+    )
+  ))
+)
+
+; - Setter 
+(define-contract example_test_adt.AdtWrapper.setter
+  (
+   (this (inout AdtWrapper))
+   (i (in Int))
+   )
+  ((
+    true
+    (and 
+      (= (adtTestA this) AdtTestConsB)
+      (= (adtTestB this) (AdtTestConsA i AdtTestConsB))
+      (= (adtTestC this) AdtTestConsB)
+    )
+  ))
+)
+
+; - Getter 
+(define-contract example_test_adt.AdtWrapper.getter
+  (
+   (this (inout AdtWrapper))
+   )
+  ((
+    true
+    (and 
+      (= (adtTestA this) AdtTestConsB)
+      (= (adtTestB this) (AdtTestConsA 0 AdtTestConsB))
+      (= (adtTestC this) AdtTestConsB)
+    )
+  ))
+)

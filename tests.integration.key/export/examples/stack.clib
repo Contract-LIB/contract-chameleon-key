@@ -1,0 +1,67 @@
+(declare-abstractions
+  (
+    (example.Stack 0)
+  )
+  ((
+     (Stack (absVal (Seq Int)))
+  ))
+)
+
+(define-contract example.Stack.init
+    (
+      (result (out Stack))
+    )
+    ((
+      true
+      (= (absVal result) seq.empty)
+    ))
+)
+
+(define-contract example.Stack.peek
+    (
+      (this (in Stack))
+      (result (out Int))
+    )
+    ((
+      (
+        and (distinct seq.empty (absVal this)) 
+        (<= (seq.len (absVal this)) 1000)
+      )
+      (= result (seq.nth (absVal this) (- (seq.len (absVal this)) 1)))
+    ))
+)
+
+(define-contract example.Stack.push
+    (
+      (this (inout Stack))
+      (v (in Int))
+    )
+    ((
+      (< (seq.len (absVal this)) 1000)
+      (= (absVal this) (seq.++ (old (absVal this)) (seq.unit v)))
+    ))
+)
+
+
+(define-contract example.Stack.pop
+    (
+      (this (inout Stack))
+    )
+    ((
+      (
+        and (distinct seq.empty (absVal this)) 
+        (<= (seq.len (absVal this)) 1000)
+      )
+      (= (absVal this) (seq.extract (old (absVal this)) 0 (- (seq.len (old (absVal this))) 1)))
+    ))
+)
+
+(define-contract example.Stack.reset
+    (
+      (this (inout Stack))
+    )
+    ((
+      true
+      (= (absVal this) seq.empty)
+    ))
+)

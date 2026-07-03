@@ -1,0 +1,21 @@
+(declare-abstractions
+    ((example.IntTreeSet 0))
+    (((IntTreeSet (absVal (Set Int))))))
+
+(define-contract example.IntTreeSet.init
+    ((result (out IntTreeSet)))
+    ((true
+      (= (absVal result) set.empty))))
+
+(define-contract example.IntTreeSet.add
+    ((this (inout IntTreeSet))
+     (v (in Int)))
+    ((true
+      (= (absVal this) (set.union (old (absVal this)) (set.singleton v))))))
+
+(define-contract example.IntTreeSet.contains
+    ((this (inout IntTreeSet))
+     (v (in Int))
+     (result (out Bool)))
+    ((true
+     (= result (set.member v (absVal this))))))

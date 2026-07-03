@@ -1,0 +1,99 @@
+; TODO: implify to work without seq
+; - Abstraction definitions
+; Example Opject
+(declare-abstractions
+  (
+    (example_test_ref.Counter 0)
+  )
+  (
+    ((Counter (absVal Int)))
+  )
+)
+
+; Abstraction owning object
+(declare-abstractions
+  (
+    (example_test_ref.StoreOwned 0)
+  )
+  (
+    ((Store (absVal (Seq Counter))))
+  )
+)
+
+; Abstraction just storing the reference
+(declare-abstractions 
+  (
+    (example_test_ref.StoreRef 0)
+  )
+  (
+    ((Store (absVal (Seq (Ref Counter)))))
+  )
+)
+
+
+; - Initializers
+(define-contract example_test_ref.StoreRef.init
+  (
+   (result (out StoreRef))
+   )
+  ((
+    true
+    (= seq.empty (absVal result))
+  ))
+)
+
+(define-contract example_test_ref.StoreOwned.init
+  (
+   (result (out StoreRef))
+   )
+  ((
+    true
+    (= seq.empty (absVal result))
+  ))
+)
+
+; - Setter contracts
+(define-contract example_test_ref.StoreRef.addRef
+  (
+    (this (inout StoreRef))
+    (input (in (Ref Counter)))
+  )
+  ((
+    true
+    (= (absVal this) (seq.++ (old (absVal this)) (seq.unit input)))
+  ))
+)
+
+(define-contract example_test_ref.StoreOwned.addOwned
+  (
+    (this (inout StoreOwned))
+    (input (in Counter))
+  )
+  ((
+    true
+    (= (absVal this) (seq.++ (old (absVal this)) (seq.unit input)))
+  ))
+)
+
+; - Getter contracts
+(define-contract example_test_ref.StoreRef.getRef
+  (
+    (this (in StoreRef))
+    (result (out (Ref Counter)))
+  )
+  ((
+    (> (seq.len (absVal this)) 0)
+    (= result (seq.nth (absVal this) 0))
+  ))
+)
+
+(define-contract example_test_ref.StoreOwned.getOwned
+  (
+    (this (in StoreOwned))
+    (result (out Counter))
+  )
+  ((
+    (> (seq.len (absVal this)) 0)
+    (= result (seq.nth (absVal this) 0))
+  ))
+)

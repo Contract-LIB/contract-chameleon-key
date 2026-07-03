@@ -1,0 +1,56 @@
+
+// List to store all creatd tasks
+def tests = []
+
+// - Counter example
+
+def examples_counter = "examples-counter"
+def counter_clib = "./export/examples/counter.clib"
+def counter_replace = "./export/examples/key_replacement_counter.toml"
+
+
+createKeYPipeline(
+  examples_counter,
+  key_applicant,
+  counter_clib,
+  counter_replace,
+  ["example.Counter[example.Counter::init()].JML normal_behavior operation contract.0"]
+).each { t -> tests << t }
+
+createKeYPipeline(
+  examples_counter,
+  key_provider,
+  counter_clib,
+  counter_replace,
+  []
+).each { t -> tests << t }
+
+
+// - Stack example
+
+def examples_stack = "examples-stack"
+def stack_clib = "./export/examples/stack.clib"
+def stack_replace = "./export/examples/key_replacement_stack.toml"
+
+createKeYPipeline(
+  examples_stack,
+  key_provider,
+  stack_clib,
+  stack_replace,
+  []
+).each { t -> tests << t }
+
+createKeYPipeline(
+  examples_stack,
+  key_applicant,
+  stack_clib,
+  stack_replace,
+  ["example.Stack[example.Stack::init()].JML normal_behavior operation contract.0"]
+).each { t -> tests << t }
+// Full run
+tasks.register('it-examples-key') {
+    group = "Integration Tests"
+    description = "Run all task of examples integration tests"
+
+    dependsOn tests
+}

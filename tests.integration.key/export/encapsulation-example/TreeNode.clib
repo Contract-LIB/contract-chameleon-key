@@ -1,0 +1,22 @@
+(declare-abstractions
+    ((example.TreeNode 0))
+    (((TreeNode (absVal (Set Int))))))
+
+(define-contract example.TreeNode.init
+    ((result (out TreeNode))
+     (v (in Int)))
+    ((true
+     (= (absVal result) (set.singleton v)))))
+
+(define-contract example.TreeNode.add
+    ((this (inout TreeNode))
+     (v (in Int)))
+    ((true
+     (= (absVal this) (set.union (old (absVal this)) (set.singleton v))))))
+
+(define-contract example.TreeNode.contains
+    ((this (inout TreeNode))
+     (v (in Int))
+     (result (out Bool)))
+    ((true
+     (= result (set.member v (absVal this))))))

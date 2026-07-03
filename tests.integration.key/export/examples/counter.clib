@@ -1,0 +1,71 @@
+(declare-abstractions
+  (
+    (example.Counter 0)
+  )
+  (
+    ((Counter (absVal Int)))
+  )
+)
+
+(define-contract example.Counter.init
+    (
+      (result (out Counter))
+    )
+    ((
+      true
+      (= (absVal result) 0)
+    ))
+)
+
+(define-contract example.Counter.value
+  (
+    (this (in Counter))
+    (result (out Int))
+  )
+  ((
+    true
+    (= result (absVal this))
+  ))
+)
+
+(define-contract example.Counter.increment
+  (
+    (this (inout Counter))
+  )
+  ((
+    true
+    (= (absVal this) (+ (old (absVal this)) 1))
+  ))
+)
+
+(define-contract example.Counter.decrement
+  (
+    (this (inout Counter))
+  )
+  ((
+    (< 0 (absVal this))
+    (= (absVal this) (- (old (absVal this)) 1))
+  )
+))
+
+(define-contract example.Counter.set
+  (
+    (this (inout Counter))
+    (value (in Int))
+  )
+  ((
+    true
+    (= (absVal this) value)
+  ))
+)
+
+
+(define-contract example.Counter.reset
+  (
+    (this (inout Counter))
+  )
+  ((
+    true
+    (= (absVal this) 0)
+  ))
+)

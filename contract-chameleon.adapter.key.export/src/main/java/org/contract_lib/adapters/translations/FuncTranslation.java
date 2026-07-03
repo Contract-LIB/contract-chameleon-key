@@ -28,10 +28,6 @@ public interface FuncTranslation {
 
   Type getJmlResultType();
 
-  public interface FuncTranslator {
-    FuncTranslation translate(Term.Identifier.IdentifierValue identifier);
-  }
-
   @FunctionalInterface
   public interface MethodExprInterface {
     Expression apply(List<Expression> expressions);

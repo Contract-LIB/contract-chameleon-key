@@ -1,7 +1,5 @@
 package org.contract_lib.adapters.translations;
 
-import java.util.Optional;
-
 import com.github.javaparser.ast.expr.Expression;
 
 import com.github.javaparser.ast.type.Type;
@@ -19,8 +17,4 @@ public interface VariableScope {
   Type getJmlResultType();
 
   boolean hasFootprint();
-
-  public interface VariableTranslator {
-    Optional<VariableScope> translate(Symbol symbol);
-  }
 }

@@ -1,0 +1,62 @@
+
+; This example shows the current limitation when we want to transfer the ownership of class to another.
+; Furthermore we are not able to use abstractions as components of other abstractions.
+
+; TODO: simplify to work without seq / just missuse this as optional
+
+(declare-abstractions
+  (
+    (example.Component 0)
+  )
+  (
+    ((Component (absVal (Seq Component))))
+  )
+)
+
+(define-contract example.Component.init
+    ((result (out Component)))
+    ((true
+     (= (absVal result) seq.empty))))
+
+; We would like to put the compont as part of the parent component,
+; however this is not possible yet, as we are not able to give the predicate up (on the outside perspective)
+; so we can store the predicate internally and return it later.
+; Furthermore, with the current implementation, we lose the internal state of the provided object.
+;
+; To verify this example remove `input.pred(input_absVal) &*&` from the postcondition.
+(define-contract example.Component.setComponent
+  (
+    (this (inout Component))
+    (input (in Component))
+  )
+  ((
+    true
+    (= (absVal this) (seq.unit input))
+  ))
+)
+
+(define-contract example.Component.getComponent
+  (
+    (this (inout Component))
+    (result (out Component))
+  )
+  ((
+    (> (seq.len (absVal this)) 0)
+    (and
+      (= result (seq.nth (old (absVal this)) 0))
+      (= (absVal this) seq.empty) ; Accessing the component means that we remove also the component.
+    )
+  ))
+)
+
+; - This contract is not possible to verify as the component would exist `inside` and `outsite` of the parent component.
+;(define-contract example.Component.brokenGetComponent
+;  (
+;    (this (in Component))
+;    (result (out Component))
+;  )
+;  ((
+;    (> (seq.len (absVal this)) 0)
+;    (= result (seq.nth (absVal this) 0))
+;  ))
+;)

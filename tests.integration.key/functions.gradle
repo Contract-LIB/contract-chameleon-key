@@ -1,0 +1,29 @@
+
+// - Call cl interface
+
+ext.integrationTasks = []
+
+ext.runIntegrationTest = { String taskName, List<String> argList ->
+
+    tasks.register(taskName, JavaExec) {
+        group = "Integration Tests"
+        description = "Run task '${taskName}'"
+        //dependsOn "${rootProject}:classes"
+
+        classpath = rootProject.sourceSets.main.runtimeClasspath +
+          project(":contract-chameleon.adapter.key.export").sourceSets.main.runtimeClasspath +
+          project(":contract-chameleon.adapter.key.import").sourceSets.main.runtimeClasspath
+        mainClass.set(rootProject.application.mainClass)
+
+        args = argList
+    }
+    ext.integrationTasks << taskName
+}
+
+// - Job for all integration tests joined
+
+tasks.register('integration-tests-key') {
+    group = "Integration Tests"
+    description = "Run all integration tests"
+    dependsOn integrationTasks
+}

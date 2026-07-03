@@ -1,0 +1,17 @@
+// List to store all creatd tasks
+def tests = []
+
+
+def mode = "OVERWRITE"
+def log = "INFO"
+
+runIntegrationTest("key-applicant-adt", ["key-applicant", "./export/features/Datatypes.clib", "-m", "${mode}"])
+runIntegrationTest("key-provider-adt", ["key-provider", "./export/features/Datatypes.clib", "-m", "${mode}"])
+
+// - Full run
+tasks.register('it-features-key') {
+    group = "Integration Tests"
+    description = "Run all task of examples integration tests"
+
+    dependsOn tests 
+}

@@ -1,0 +1,41 @@
+
+// List to store all creatd tasks
+def tests = []
+
+// - Core
+
+def examples_counter = "theories-core"
+def counter_clib = "./export/theories/Core.clib"
+def counter_replace = "./export/theories/verifast_replacement_core.toml"
+
+def mode = "OVERWRITE"
+def log = "INFO"
+
+// KeY export
+
+
+runIntegrationTest("key-applicant-core", ["key-applicant", "./export/theories/Core.clib", "-m", "${mode}"])
+runIntegrationTest("key-provider-core", ["key-provider", "./export/theories/Core.clib", "-m", "${mode}"])
+
+runIntegrationTest("key-applicant-ref", ["key-applicant", "./export/theories/Ref.clib", "-m", "${mode}"])
+runIntegrationTest("key-provider-ref", ["key-provider", "./export/theories/Ref.clib", "-m", "${mode}"])
+
+runIntegrationTest("key-applicant-seq", ["key-applicant", "./export/theories/Seq.clib", "-m", "${mode}"])
+runIntegrationTest("key-provider-seq", ["key-provider", "./export/theories/Seq.clib", "-m", "${mode}"])
+
+runIntegrationTest("key-applicant-set", ["key-applicant", "./export/theories/FiniteSet.clib", "-m", "${mode}"])
+runIntegrationTest("key-provider-set", ["key-provider", "./export/theories/FiniteSet.clib", "-m", "${mode}"])
+
+runIntegrationTest("key-applicant-map", ["key-applicant", "./export/theories/FiniteMap.clib", "-m", "${mode}"])
+runIntegrationTest("key-provider-map", ["key-provider", "./export/theories/FiniteMap.clib", "-m", "${mode}"])
+
+
+
+
+// - Full run
+tasks.register('it-theories-key') {
+    group = "Integration Tests"
+    description = "Run all task of examples integration tests"
+
+    dependsOn tests
+}

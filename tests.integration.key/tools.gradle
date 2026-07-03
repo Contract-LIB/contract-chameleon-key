@@ -1,0 +1,107 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'org.apache.groovy:groovy-toml:5.0.5'
+    }
+}
+
+import groovy.json.JsonSlurper
+import groovy.toml.TomlSlurper
+
+// ===== Importing the generated files into the tools
+
+// - Check that the tools for the integration tests exist
+//   - KeY
+//   - CI for KeY
+
+tasks.register('check-tools-files') {
+
+  group = "Help"
+  description = "Check if all tools (verifast, key, key-ci) are available."
+
+  println "===="
+  println "Integration Test Setup:"
+  println "Root dir: ${rootProject.rootDir}"
+  println "Project dir: ${project.projectDir}"
+  println "----"
+
+  def key = project.findProperty("custom_key_exe") ?: contract_chameleon_key_exe
+  def ci_key = project.findProperty("custom_key_exe") ?: contract_chameleon_ci_key_exe
+
+  def key_file = new File(rootProject.rootDir, key)
+  def ci_key_file = new File(rootProject.rootDir, ci_key)
+
+  println key_file.exists() ? "✅ KeY exists: ${key_file.absolutePath}" : "❌ KeY not found: ${key_file.absolutePath}"
+  println ci_key_file.exists() ? "✅ KeY CI exists: ${ci_key_file.absolutePath}" : "❌ KeY CI not found: ${ci_key_file.absolutePath}"
+
+  println "===="
+}
+
+// Replace function
+
+ext.replaceWithImpl = {String taskName, String source, String destination, String replacementSource -> 
+  tasks.register(taskName, Copy) {
+
+    def jsonFile = file(replacementSource)
+
+    inputs.file(jsonFile)
+
+    def sourceLocation = layout.buildDirectory.dir(source)
+    def destinationLocation = layout.buildDirectory.dir(destination)
+
+    from(sourceLocation)
+    into(destinationLocation)
+
+    //outputs.dir(layout.buildDirectory.dir(destination)) 
+
+    group = "Integration Tests Copy / Replace"
+    description = "Moves the created integration test source files and fills in the user implmentation."
+    
+    def replacements = [:]
+    doFirst {
+
+        def conf = new TomlSlurper().parse(jsonFile)
+        conf.each { packageKey, classes -> 
+          classes.each { classKey, values ->
+              values.each { tag, value ->
+              //replacements["${packageKey}.${classKey}.${tag}"] = value
+                //println("${packageKey}.${classKey}.${tag} = ${value}")
+                //println()
+                replacements["${packageKey}.${classKey}.${tag}"] = value
+              }
+             //subvalue.each { tag, value ->
+              //replacements["${packageKey}.${classKey}.${tag}"] = value
+              //print("${packageKey}.${classKey}.${tag}")
+            //}
+          }
+        }
+
+        replacements.each{ key, v -> 
+          println(key)
+        }
+        //replacements =  new JsonSlurper().parse(jsonFile)
+    }
+
+    filter { String line ->
+        //Singleline comment: // TODO: Implement 'example.Cell.init'.
+        replacements.each { key, value ->
+            def target = "// TODO: Implement '${key}'."
+            //println(target)
+            if (line.contains(target)) {
+                line = line.replace(target, value)
+            }
+        }
+        //Inline comment: /* TODO: Implement 'example.Cell.pred'. */
+        replacements.each { key, value ->
+        
+            def target = "/* TODO: Implement '${key}'. */"
+            if (line.contains(target)) {
+                line = line.replace(target, value)
+            }
+        }
+        return line
+    }
+  }
+}
