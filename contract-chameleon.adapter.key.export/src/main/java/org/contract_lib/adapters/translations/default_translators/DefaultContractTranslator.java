@@ -141,8 +141,8 @@ public class DefaultContractTranslator implements ContractTranslator {
     // only add assignableClause / accessibleClause when there is a return type
     if (variableScope.getReturnType().isPresent()) {
       clauses.addAll(accessibleClause);
-      clauses.addAll(assignableClause);
     }
+    clauses.addAll(assignableClause);
 
     strictlyNothing.ifPresent(clauses::add);
 
