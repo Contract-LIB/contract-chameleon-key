@@ -27,7 +27,6 @@ createKeYPipeline(
   []
 ).each { t -> tests << t }
 
-
 // - Bad Alias Abstraction
 def bad_alias = "alias-bad-alias"
 def bad_alias_clib = "./export/alias_problem/bad_alias_abstraction.clib"
@@ -47,6 +46,29 @@ createKeYPipeline(
   key_provider,
   bad_alias_clib,
   bad_alias_replace,
+  client_package,
+  []
+).each { t -> tests << t }
+
+def special = "alias-special"
+def special_clib = "./export/alias_problem/special_abstraction.clib"
+def special_replace = "./export/alias_problem/key_replacement_special_abstraction.toml"
+
+createKeYPipeline(
+  special,
+  key_applicant,
+  special_clib,
+  special_replace,
+  client_package,
+  ["alias.SpecialAbstraction[alias.SpecialAbstraction::init()].JML normal_behavior operation contract.0"]
+).each { t -> tests << t }
+
+
+createKeYPipeline(
+  special,
+  key_provider,
+  special_clib,
+  special_replace,
   client_package,
   []
 ).each { t -> tests << t }

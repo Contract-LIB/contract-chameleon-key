@@ -65,7 +65,6 @@ createKeYPipeline(
   todo_replace,
   client_package,
   ["examples.TodoList[examples.TodoList::init()].JML normal_behavior operation contract.0"]
-  //"examples.Whiteboard[examples.Whiteboard::init()].JML normal_behavior operation contract.0"]
 ).each { t -> tests << t }
 
 createKeYPipeline(
