@@ -7,13 +7,14 @@ def tests = []
 def examples_counter = "examples-counter"
 def counter_clib = "./export/examples/counter.clib"
 def counter_replace = "./export/examples/key_replacement_counter.toml"
-
+def client_package = "examples"
 
 createKeYPipeline(
   examples_counter,
   key_applicant,
   counter_clib,
   counter_replace,
+  client_package,
   ["example.Counter[example.Counter::init()].JML normal_behavior operation contract.0"]
 ).each { t -> tests << t }
 
@@ -22,6 +23,7 @@ createKeYPipeline(
   key_provider,
   counter_clib,
   counter_replace,
+  client_package,
   []
 ).each { t -> tests << t }
 
@@ -37,6 +39,7 @@ createKeYPipeline(
   key_provider,
   stack_clib,
   stack_replace,
+  client_package,
   []
 ).each { t -> tests << t }
 
@@ -45,6 +48,7 @@ createKeYPipeline(
   key_applicant,
   stack_clib,
   stack_replace,
+  client_package,
   ["example.Stack[example.Stack::init()].JML normal_behavior operation contract.0"]
 ).each { t -> tests << t }
 // Full run

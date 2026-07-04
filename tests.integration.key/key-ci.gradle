@@ -102,6 +102,7 @@ ext.createKeYPipeline = {
   String contract_chameleon_adapter,
   String contract_lib_file,
   String replacement_file,
+  String client_package,
   List<String> forbid_contracts
    -> 
 
@@ -126,7 +127,7 @@ ext.createKeYPipeline = {
 
   createKeYClient(client_task,
     "${contract_chameleon_destination}",
-    "example",
+    "${client_package}",
     "_Client")
 
   replaceWithImpl(replace_task,

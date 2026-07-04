@@ -1,0 +1,83 @@
+(declare-abstractions
+  (
+    (alias.SpecialAbstraction 0)
+  )
+  (
+    ((SpecialAbstraction
+      (absValRef (Ref SpecialAbstraction))
+      (absVal Int)
+    ))
+  )
+)
+
+; Constructor
+(define-contract alias.SpecialAbstraction.init
+    (
+      (result (out SpecialAbstraction))
+    )
+    ((
+      true
+      (and
+        (= (absValRef result) null)
+        (= (absVal result) 0)
+      )
+    ))
+)
+
+; Getter Ref
+(define-contract alias.SpecialAbstraction.getRef
+    (
+      (this (in SpecialAbstraction))
+      (result (out (Ref SpecialAbstraction)))
+    )
+    ((
+      true
+      (= (absValRef this) result)
+    ))
+)
+; Getter Value
+(define-contract alias.SpecialAbstraction.getValue
+    (
+      (this (in SpecialAbstraction))
+      (result (out Int))
+    )
+    ((
+      true
+      (= (absVal this) result)
+    ))
+)
+
+; Setter Ref
+(define-contract alias.SpecialAbstraction.setRef
+    (
+      (this (inout SpecialAbstraction))
+      (value (in (Ref SpecialAbstraction)))
+    )
+    ((
+      true
+      (= (absValRef this) value)
+    ))
+)
+; Setter Value
+(define-contract alias.SpecialAbstraction.setValue
+    (
+      (this (inout SpecialAbstraction))
+      (value (in Int))
+    )
+    ((
+      true
+      (= (absVal this) value)
+    ))
+)
+
+(define-contract alias.SpecialAbstraction.looseInfo
+    (
+      (this (inout SpecialAbstraction))
+      (valueA (in (Ref SpecialAbstraction)))
+      (valueB (in (Ref SpecialAbstraction)))
+    )
+    ((
+      true
+      true
+    ))
+)

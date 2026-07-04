@@ -1,0 +1,36 @@
+
+// List to store all creatd tasks
+def tests = []
+
+// - Counter example
+
+def special = "alias-special"
+def special_clib = "./export/alias_problem/special_abstraction.clib"
+def special_replace = "./export/alias_problem/key_replacement_special_abstraction.toml"
+def client_package = "alias"
+
+createKeYPipeline(
+  special,
+  key_applicant,
+  special_clib,
+  special_replace,
+  client_package,
+  ["alias.SpecialAbstraction[alias.SpecialAbstraction::init()].JML normal_behavior operation contract.0"]
+).each { t -> tests << t }
+
+createKeYPipeline(
+  special,
+  key_provider,
+  special_clib,
+  special_replace,
+  client_package,
+  []
+).each { t -> tests << t }
+
+// Full run
+tasks.register('it-alias-key') {
+    group = "Integration Tests"
+    description = "Run all task of alias integration tests"
+
+    dependsOn tests
+}

@@ -2,6 +2,7 @@ apply from: "functions.gradle"
 apply from: "tools.gradle"
 apply from: "key-ci.gradle"
 
+apply from: "export/alias_problem/build.gradle"
 apply from: "export/encapsulation-example/build.gradle"
 apply from: "export/examples/build.gradle"
 apply from: "export/features/build.gradle"
