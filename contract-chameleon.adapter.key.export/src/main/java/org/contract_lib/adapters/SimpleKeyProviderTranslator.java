@@ -328,6 +328,24 @@ public class SimpleKeyProviderTranslator {
     addModifierIfRequired(DetailLevel.INSTANCE_ACCESSIBLE, footprintInv);
 
     dec.addMember(footprintInv);
+
+    // All ghost fields of this class are part of the footprint footprint
+    JmlClassExprDeclaration footprintThisInv = new JmlClassExprDeclaration(
+        NodeList.nodeList(), //JML Tags
+        NodeList.nodeList(), //Modifier
+        new SimpleName("invariant"), // kind //TODO: this is also ignored, but invariant at least printed.
+        null, //new SimpleName("name"), //name //TODO: this is not supported yet in printing??
+        new MethodCallExpr(
+            null, // scope
+            new SimpleName("\\subset"),
+            NodeList.nodeList(
+                new ThisExpr(),
+                new FieldAccessExpr(new ThisExpr(), NodeList.nodeList(), new SimpleName(FOOTPRINT_NAME)))))
+        .addModifier(Modifier.DefaultKeyword.PUBLIC);
+
+    addModifierIfRequired(DetailLevel.INSTANCE_ACCESSIBLE, footprintInv);
+
+    dec.addMember(footprintThisInv);
   }
 
   protected void annotateClassOrInterfaceDecl(ClassOrInterfaceDeclaration decl) {

@@ -1,4 +1,4 @@
-[example.Counter]
+[examples.Counter]
 init = """
 
     this.c = 0;
@@ -42,10 +42,10 @@ reset = """
 """
 file = ""
 
-[example._Client]
+[examples._Client]
 
 file = """
-package example;
+package examples;
 
 public class _Client {
 

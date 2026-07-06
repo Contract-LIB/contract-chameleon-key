@@ -1,28 +1,52 @@
 
 // List to store all creatd tasks
 def tests = []
-
-// - Counter example
-
-def special = "alias-special"
-def special_clib = "./export/alias_problem/special_abstraction.clib"
-def special_replace = "./export/alias_problem/key_replacement_special_abstraction.toml"
 def client_package = "alias"
 
+// - Loosing Abstraction
+
+def loosing = "alias-loosing"
+def loosing_clib = "./export/alias_problem/loosing_abstraction.clib"
+def loosing_replace = "./export/alias_problem/key_replacement_loosing_abstraction.toml"
+
 createKeYPipeline(
-  special,
+  loosing,
   key_applicant,
-  special_clib,
-  special_replace,
+  loosing_clib,
+  loosing_replace,
   client_package,
-  ["alias.SpecialAbstraction[alias.SpecialAbstraction::init()].JML normal_behavior operation contract.0"]
+  ["alias.LoosingAbstraction[alias.LoosingAbstraction::init()].JML normal_behavior operation contract.0"]
 ).each { t -> tests << t }
 
 createKeYPipeline(
-  special,
+  loosing,
   key_provider,
-  special_clib,
-  special_replace,
+  loosing_clib,
+  loosing_replace,
+  client_package,
+  []
+).each { t -> tests << t }
+
+
+// - Bad Alias Abstraction
+def bad_alias = "alias-bad-alias"
+def bad_alias_clib = "./export/alias_problem/bad_alias_abstraction.clib"
+def bad_alias_replace = "./export/alias_problem/key_replacement_bad_alias_abstraction.toml"
+
+createKeYPipeline(
+  bad_alias,
+  key_applicant,
+  bad_alias_clib,
+  bad_alias_replace,
+  client_package,
+  ["alias.BadAliasAbstraction[alias.BadAliasAbstraction::init()].JML normal_behavior operation contract.0"]
+).each { t -> tests << t }
+
+createKeYPipeline(
+  bad_alias,
+  key_provider,
+  bad_alias_clib,
+  bad_alias_replace,
   client_package,
   []
 ).each { t -> tests << t }

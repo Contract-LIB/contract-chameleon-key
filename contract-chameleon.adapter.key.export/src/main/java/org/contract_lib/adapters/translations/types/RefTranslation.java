@@ -31,9 +31,10 @@ public class RefTranslation implements TypeTranslation {
           new SimpleName("InvalidType"),
           null);
     }
+    // TODO: Use proper annotation instead of hack inside the type's name
     return new ClassOrInterfaceType(
         null,
-        new SimpleName(paramter.get().getName()),
+        new SimpleName("/*@ nullable @*/ " + paramter.get().getName()),
         null);
   }
 

@@ -123,7 +123,7 @@ public class DefaultContractTranslator implements ContractTranslator {
         contract.formals(),
         variableScope);
 
-    Optional<JmlClause> strictlyNothing = strictlyNothing(contract.formals(), variableScope);
+    Optional<JmlClause> nothingClauses = nothingClauses(contract.formals(), variableScope);
 
     NodeList<JmlClause> clauses = new NodeList<>();
 
@@ -134,17 +134,18 @@ public class DefaultContractTranslator implements ContractTranslator {
 
     //add ensures clauses for new created object (invariant, fresh) 
     objectCreated(contract.formals(), variableScope).ifPresent(clauses::addAll);
+
     //allows all parameters that are `INOUT`, to have new objects created in their footprint
     newElementsFreshClause(contract.formals(), variableScope).ifPresent(clauses::add);
 
-    //TODO: This might be be a completely semantics-meaning translation :(
-    // only add assignableClause / accessibleClause when there is a return type
     if (variableScope.getReturnType().isPresent()) {
       clauses.addAll(accessibleClause);
     }
     clauses.addAll(assignableClause);
 
-    strictlyNothing.ifPresent(clauses::add);
+    if (assignableClause.isEmpty()) {
+      nothingClauses.ifPresent(clauses::add);
+    }
 
     JmlContract jmlContract = new JmlContract()
         .setBehavior(Behavior.NORMAL)
@@ -184,8 +185,12 @@ public class DefaultContractTranslator implements ContractTranslator {
     return true;
   }
 
+  protected boolean isFootprintAssignable(ArgumentMode am) {
+    return am.equals(ArgumentMode.INOUT);
+  }
+
   protected boolean isAssignable(ArgumentMode am) {
-    return am.equals(ArgumentMode.OUT) | am.equals(ArgumentMode.INOUT);
+    return am.equals(ArgumentMode.INOUT) || am.equals(ArgumentMode.OUT);
   }
 
   protected boolean isAccessible(ArgumentMode am) {
@@ -194,6 +199,10 @@ public class DefaultContractTranslator implements ContractTranslator {
 
   protected boolean filterResult(Formal formal) {
     return !formal.identifier().identifier().equals("result");
+  }
+
+  protected boolean filterThis(Formal formal) {
+    return !formal.identifier().identifier().equals("this");
   }
 
   protected boolean isReference(Formal formal, VariableTranslator variableScope) {
@@ -249,7 +258,7 @@ public class DefaultContractTranslator implements ContractTranslator {
 
     List<JmlClause> assignable = formals
         .stream()
-        .filter((f) -> this.isAssignable(f.argumentMode()))
+        .filter((f) -> this.isFootprintAssignable(f.argumentMode()))
         .filter(this::filterResult) //do not put result statement to clause
         .filter((f) -> this.isReference(f, variableScope)) //do not put result statement to clause
         .map((s) -> this.translateAssignableAccessibleClause(s, JmlClauseKind.ASSIGNABLE, variableScope))
@@ -258,7 +267,22 @@ public class DefaultContractTranslator implements ContractTranslator {
     return assignable;
   }
 
-  protected Optional<JmlClause> strictlyNothing(
+  protected List<JmlClause> translateConstructor(
+      List<Formal> formals,
+      VariableTranslator variableScope) {
+
+    List<JmlClause> assignable = formals
+        .stream()
+        .filter((f) -> this.isFootprintAssignable(f.argumentMode()))
+        .filter(this::filterThis) //do not put result statement to clause
+        .filter((f) -> this.isReference(f, variableScope)) //do not put result statement to clause
+        .map((s) -> this.translateAssignableAccessibleClause(s, JmlClauseKind.ASSIGNABLE, variableScope))
+        .collect(Collectors.toList());
+
+    return assignable;
+  }
+
+  protected Optional<JmlClause> nothingClauses(
       List<Formal> formals,
       VariableTranslator variableScope) {
 
@@ -271,6 +295,17 @@ public class DefaultContractTranslator implements ContractTranslator {
       return Optional.of(
           new JmlSimpleExprClause(ASSIGNABLE, null, NodeList.nodeList(),
               new NameExpr(new SimpleName("\\strictly_nothing"))));
+    } else if (formals
+        .stream()
+        .filter((f) -> this.isAssignable(f.argumentMode()))
+        .filter(this::filterResult) //do not put result statement to clause
+        .filter(this::filterThis) //do not put result statement to clause
+        .filter((f) -> this.isReference(f, variableScope))
+        .findAny()
+        .isEmpty()) {
+      return Optional.of(
+          new JmlSimpleExprClause(ASSIGNABLE, null, NodeList.nodeList(),
+              new NameExpr(new SimpleName("\\nothing"))));
     } else {
       return Optional.empty();
     }

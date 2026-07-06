@@ -1,4 +1,4 @@
-[example.Stack]
+[examples.Stack]
 body = """
 
     private int[] comp;
@@ -52,10 +52,10 @@ reset = """
 
 file = ""
 
-[example._Client]
+[examples._Client]
 
 file = """
-package example;
+package examples;
 
 public class _Client {
 

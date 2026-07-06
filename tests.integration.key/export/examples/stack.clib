@@ -1,13 +1,13 @@
 (declare-abstractions
   (
-    (example.Stack 0)
+    (examples.Stack 0)
   )
   ((
      (Stack (absVal (Seq Int)))
   ))
 )
 
-(define-contract example.Stack.init
+(define-contract examples.Stack.init
     (
       (result (out Stack))
     )
@@ -17,7 +17,7 @@
     ))
 )
 
-(define-contract example.Stack.peek
+(define-contract examples.Stack.peek
     (
       (this (in Stack))
       (result (out Int))
@@ -31,7 +31,7 @@
     ))
 )
 
-(define-contract example.Stack.push
+(define-contract examples.Stack.push
     (
       (this (inout Stack))
       (v (in Int))
@@ -43,7 +43,7 @@
 )
 
 
-(define-contract example.Stack.pop
+(define-contract examples.Stack.pop
     (
       (this (inout Stack))
     )
@@ -56,7 +56,7 @@
     ))
 )
 
-(define-contract example.Stack.reset
+(define-contract examples.Stack.reset
     (
       (this (inout Stack))
     )

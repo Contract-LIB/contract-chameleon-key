@@ -15,7 +15,7 @@ createKeYPipeline(
   counter_clib,
   counter_replace,
   client_package,
-  ["example.Counter[example.Counter::init()].JML normal_behavior operation contract.0"]
+  ["examples.Counter[examples.Counter::init()].JML normal_behavior operation contract.0"]
 ).each { t -> tests << t }
 
 createKeYPipeline(
@@ -49,7 +49,7 @@ createKeYPipeline(
   stack_clib,
   stack_replace,
   client_package,
-  ["example.Stack[example.Stack::init()].JML normal_behavior operation contract.0"]
+  ["examples.Stack[examples.Stack::init()].JML normal_behavior operation contract.0"]
 ).each { t -> tests << t }
 // Full run
 tasks.register('it-examples-key') {

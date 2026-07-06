@@ -1,13 +1,13 @@
 (declare-abstractions
   (
-    (example.Counter 0)
+    (examples.Counter 0)
   )
   (
     ((Counter (absVal Int)))
   )
 )
 
-(define-contract example.Counter.init
+(define-contract examples.Counter.init
     (
       (result (out Counter))
     )
@@ -17,7 +17,7 @@
     ))
 )
 
-(define-contract example.Counter.value
+(define-contract examples.Counter.value
   (
     (this (in Counter))
     (result (out Int))
@@ -28,7 +28,7 @@
   ))
 )
 
-(define-contract example.Counter.increment
+(define-contract examples.Counter.increment
   (
     (this (inout Counter))
   )
@@ -38,7 +38,7 @@
   ))
 )
 
-(define-contract example.Counter.decrement
+(define-contract examples.Counter.decrement
   (
     (this (inout Counter))
   )
@@ -48,7 +48,7 @@
   )
 ))
 
-(define-contract example.Counter.set
+(define-contract examples.Counter.set
   (
     (this (inout Counter))
     (value (in Int))
@@ -60,7 +60,7 @@
 )
 
 
-(define-contract example.Counter.reset
+(define-contract examples.Counter.reset
   (
     (this (inout Counter))
   )

@@ -1,0 +1,132 @@
+[alias.BadAliasAbstraction]
+body = """
+
+    //@ public invariant this.value == this.absValue;
+    //@ public invariant this.absState == (ref == null ? 0 : ref.absValue);
+
+
+    //@ public invariant ref != null && ref != this ==> \\invariant_for(this.ref);
+    //@ public invariant ref != null && ref != this ==> \\subset(this.ref.fp, this.fp);
+
+    private int value;
+    private /*@ nullable @*/ BadAliasAbstraction ref;
+"""
+
+init = """
+
+    this.value = 0;
+    this.ref = null;
+
+    //@ set this.absValue = 0;
+    //@ set this.absState = 0;
+    //@ set fp = \\set_union(this,\\all_fields(this));
+"""
+
+getValue = """
+
+    return this.value;
+"""
+
+getState = """
+
+    return ref == null ? 0 : ref.getValue();
+"""
+
+setBoth = """
+
+
+    this.value = value;
+    //@ set this.absValue = value;
+
+    if (this.ref == this) {
+      //@ set this.absState = value;
+    } else if (this.ref == null) {
+      //BadAliasAbstraction n = BadAliasAbstraction.init();
+      //n.setBoth(value);
+      this.ref = this;
+      //@ set this.absState = value;
+      //@ set fp = \\set_union(this,\\all_fields(this));
+    } else {
+      //@ assert this.ref != null;
+      //@ assert this.ref != this;
+      this.ref = this;
+      //this.ref.setBoth(value);
+      //@ set this.absState = value;
+    }
+
+"""
+
+invalid = """
+  //This would not be valid in VF, as we cannot return the predicate for value afterwards.
+  this.ref = value;
+
+  /* And example for a correct implementation:
+  this.ref = BadAliasAbstraction.init();
+  this.ref.setBoth(10);
+  */
+
+  // We need to update our footprint
+  //@ set fp = \\all_fields(this);
+  // And updtate our absState
+  //@ set this.absState = 10;
+"""
+file = ""
+
+[alias._Client]
+
+file = """
+package alias;
+
+public class _Client {
+
+  /*@ normal_behavior
+    requires true;
+    ensures true;
+    */
+  public static void main(String[] args) 
+  {
+    invalidClient();
+    invalidClientSelf();
+  }
+
+  /*@ normal_behavior
+    requires true;
+    ensures true;
+  */
+  public static void invalidClient() 
+  {
+    BadAliasAbstraction a = BadAliasAbstraction.init();
+    a.setBoth(10);
+
+    BadAliasAbstraction b = BadAliasAbstraction.init();
+    b.setBoth(10);
+
+    //@ assert a.absValue == b.absValue;
+    a.invalid(b);
+
+    // ERROR: This can trigger a sideeffect on b
+    a.setBoth(20);
+
+    //@ assert a.absState == 20;
+    //@ assert a.absValue == 20;
+    //@ assert b.absValue == 10;
+  }
+
+
+  /*@ normal_behavior
+    requires true;
+    ensures true;
+  */
+  public static void invalidClientSelf()
+  {
+    BadAliasAbstraction a = BadAliasAbstraction.init();
+    // a.absState -> a.absValue;
+    a.invalid(a);
+
+    // ERROR: This would trigger a sideeffect on self
+    //a.setState(10);
+    //@ assert a.absState == 10; 
+    //@ assert a.absValue == 10; // this is not intended!
+  }
+}
+"""
