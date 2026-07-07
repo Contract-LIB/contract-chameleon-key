@@ -1,0 +1,103 @@
+(declare-abstractions
+  (
+    (alias.BadAliasAbstraction 0)
+  )
+  (
+    ((BadAliasAbstraction
+      (absState Int)
+      (absValue Int)))
+  )
+)
+; Constructor
+(define-contract alias.BadAliasAbstraction.init
+    (
+      (result (out BadAliasAbstraction))
+    )
+    ((
+      true
+      (and
+        (= (absValue result) 0)
+        (= (absState result) 0)
+      )
+    ))
+)
+
+; Getter
+(define-contract alias.BadAliasAbstraction.getValue
+    (
+      (this (in BadAliasAbstraction))
+      (result (out Int))
+    )
+    ((
+      true
+      (= (absValue this) result)
+    ))
+)
+(define-contract alias.BadAliasAbstraction.getState
+    (
+      (this (in BadAliasAbstraction))
+      (result (out Int))
+    )
+    ((
+      true
+      (= (absState this) result)
+    ))
+)
+
+; Impossible Setter – as the self reference in the impl. cannot be ruled out
+;(define-contract alias.BadAliasAbstraction.setState
+;    (
+;      (this (inout BadAliasAbstraction))
+;      (state (in Int))
+;    )
+;    ((
+;      true
+;      (and
+;        (= (absState this) state)
+;        (= (absValue this) (old (absValue this)))
+;      )
+;    ))
+;)
+;(define-contract alias.BadAliasAbstraction.setValue
+;    (
+;      (this (inout BadAliasAbstraction))
+;      (value (in Int))
+;    )
+;    ((
+;      true
+;      (and
+;        (= (absState this) (old (absState this)))
+;        (= (absValue this) value)
+;      )
+;    ))
+;)
+
+; Setter
+(define-contract alias.BadAliasAbstraction.setBoth
+    (
+      (this (inout BadAliasAbstraction))
+      (value (in Int))
+    )
+    ((
+      true
+      (and
+        (= (absState this) value)
+        (= (absValue this) value)
+      )
+    ))
+)
+
+; Bad Alias Contract
+(define-contract alias.BadAliasAbstraction.invalid
+    (
+      (this (inout BadAliasAbstraction))
+      (value (in (Ref BadAliasAbstraction)))
+    )
+    ((
+      (= (absValue this) 10)
+      (and 
+        (= (absState this) 10)
+        (= (absValue this) 10)
+      )
+    ))
+)

@@ -1,0 +1,87 @@
+(declare-abstractions
+  (
+    (alias.LoosingAbstraction 0)
+  )
+  (
+    ((LoosingAbstraction
+      (absValRef (Ref LoosingAbstraction))
+      (absVal Int)
+    ))
+  )
+)
+
+; Constructor
+(define-contract alias.LoosingAbstraction.init
+    (
+      (result (out LoosingAbstraction))
+    )
+    ((
+      true
+      (and
+        (= (absValRef result) null)
+        (= (absVal result) 0)
+      )
+    ))
+)
+
+; Getter Ref
+(define-contract alias.LoosingAbstraction.getRef
+    (
+      (this (in LoosingAbstraction))
+      (result (out (Ref LoosingAbstraction)))
+    )
+    ((
+      true
+      (= (absValRef this) result)
+    ))
+)
+; Getter Value
+(define-contract alias.LoosingAbstraction.getValue
+    (
+      (this (in LoosingAbstraction))
+      (result (out Int))
+    )
+    ((
+      true
+      (= (absVal this) result)
+    ))
+)
+
+; Setter Ref
+(define-contract alias.LoosingAbstraction.setRef
+    (
+      (this (inout LoosingAbstraction))
+      (value (in (Ref LoosingAbstraction)))
+    )
+    ((
+      true
+      (and
+        (= (absValRef this) value)
+        (= (absVal this) (old (absVal  this)))
+      )
+    ))
+)
+; Setter Value
+(define-contract alias.LoosingAbstraction.setValue
+    (
+      (this (inout LoosingAbstraction))
+      (value (in Int))
+    )
+    ((
+      true
+      (and
+        (= (absVal this) value)
+        (= (absValRef this) (old (absValRef this)))
+      )
+    ))
+)
+
+(define-contract alias.LoosingAbstraction.looseInfo
+    (
+      (this (inout LoosingAbstraction))
+    )
+    ((
+      true
+      true
+    ))
+)

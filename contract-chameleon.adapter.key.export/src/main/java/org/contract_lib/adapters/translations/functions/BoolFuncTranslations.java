@@ -2,6 +2,7 @@ package org.contract_lib.adapters.translations.functions;
 
 import java.util.List;
 import com.github.javaparser.ast.expr.BinaryExpr;
+import com.github.javaparser.ast.expr.BooleanLiteralExpr;
 import com.github.javaparser.ast.expr.UnaryExpr;
 
 import com.github.javaparser.ast.type.Type;
@@ -14,6 +15,7 @@ import org.contract_lib.lang.contract_lib.ast.Sort;
 
 import static org.contract_lib.adapters.translations.FuncTranslation.UnaryTranslation;
 import static org.contract_lib.adapters.translations.FuncTranslation.BinaryTranslation;
+import static org.contract_lib.adapters.translations.FuncTranslation.ConstantTranslation;
 
 @AutoService(FuncProvider.class)
 public record BoolFuncTranslations() implements FuncProvider {
@@ -23,7 +25,14 @@ public record BoolFuncTranslations() implements FuncProvider {
 
   public List<FuncTranslation> getAll() {
     return List.of(
-        //TODO: Add constants true, false
+        new ConstantTranslation("true",
+            new BooleanLiteralExpr(true),
+            JML_BOOLEAN_TYPE,
+            CLIB_BOOLEAN_TYPE),
+        new ConstantTranslation("false",
+            new BooleanLiteralExpr(false),
+            JML_BOOLEAN_TYPE,
+            CLIB_BOOLEAN_TYPE),
         new UnaryTranslation(
             "not",
             UnaryExpr.Operator.LOGICAL_COMPLEMENT,

@@ -1,0 +1,145 @@
+[alias.LoosingAbstraction]
+body = """
+
+    //@ public invariant this.c == this.absVal;
+    //@ public invariant this.ref == this.absValRef;
+
+    private int c;
+    private /*@ nullable @*/ LoosingAbstraction ref;
+"""
+init = """
+
+    this.c = 0;
+    this.ref = null;
+
+    //@ set this.absVal = 0;
+    //@ set this.absValRef = null;
+    //@ set fp = this.*;
+"""
+getRef = """
+
+    return this.ref;
+"""
+getValue = """
+
+    return this.c;
+"""
+setRef = """
+
+    this.ref = value;
+    //@ set this.absValRef = value;
+"""
+setValue = """
+
+    this.c = value;
+    //@ set this.absVal = value;
+"""
+looseInfo = ""
+file = ""
+
+[alias._Client]
+
+file = """
+package alias;
+
+public class _Client {
+
+  /*@ normal_behavior
+    requires true;
+    ensures true;
+    */
+  public static void main(String[] args) 
+  {
+    clientAloose();
+    clientAkeep();
+    clientAtryBreak();
+  }
+
+  /*@ normal_behavior
+    requires true;
+    ensures true;
+  */
+  public static void clientAloose() 
+  {
+    LoosingAbstraction a = LoosingAbstraction.init();
+    a.setRef(a);
+
+    LoosingAbstraction c = a.getRef();
+    //@ assert c == a;
+
+    //loses information about the reference it holds, and its value
+    a.looseInfo();
+    // All of those methos verify well.
+  }
+
+
+  /*@ normal_behavior
+    requires true;
+    ensures true;
+  */
+  public static void clientAkeep()
+  {
+    LoosingAbstraction a = LoosingAbstraction.init();
+    int vA = a.getValue();
+    //@ assert vA == 0;
+
+    a.setRef(a);
+
+    vA = a.getValue();
+    //@ assert vA == 0;
+
+    LoosingAbstraction c = a.getRef();
+
+    //@ assert c == a;
+    //@ assert c != null;
+
+    int vC = c.getValue();
+    //@ assert vC == 0;
+
+    // Let's set the value of c (we know it is equals to a)
+    c.setValue(10);
+
+
+    vA = a.getValue();
+    //@ assert vA == 10;
+    vC = c.getValue();
+    //@ assert vC == 10;
+  }
+
+
+  /*@ normal_behavior
+    requires true;
+    ensures true;
+  */
+  public static void clientAtryBreak() 
+  {
+    LoosingAbstraction a = LoosingAbstraction.init();
+    a.setRef(a);
+
+    LoosingAbstraction c = a.getRef();
+    //@ assert c == a;
+
+    //loses information about the reference it holds, and its value
+    a.looseInfo();
+
+    LoosingAbstraction d = a.getRef();
+    // After loosing the information about the reference,
+    // the following assertion does not hold anymore.
+    // We can also not sure what state d is in.
+    // @ assert d == a;
+    // @ assert d != null;
+
+    // Lets ensure that d is not `null`.
+    if (d == null) {
+      d = LoosingAbstraction.init();
+    }
+
+    //@ assert d != null;
+
+    // We are not able know where d resighns on the heap,
+    // So verification failes here,
+    // even though we know that d.setValue(10) is a valid call.
+    //d.setValue(10);
+  }
+}
+"""
