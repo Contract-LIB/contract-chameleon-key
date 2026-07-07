@@ -4,11 +4,6 @@ import java.util.List;
 
 import com.github.javaparser.ast.type.Type;
 import com.google.auto.service.AutoService;
-import com.github.javaparser.ast.NodeList;
-import com.github.javaparser.ast.expr.ArrayAccessExpr;
-import com.github.javaparser.ast.expr.Expression;
-import com.github.javaparser.ast.expr.FieldAccessExpr;
-import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.ast.expr.NameExpr;
 import com.github.javaparser.ast.expr.SimpleName;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
@@ -17,7 +12,6 @@ import com.github.javaparser.ast.type.PrimitiveType;
 import org.contract_lib.adapters.translations.FuncProvider;
 import org.contract_lib.adapters.translations.FuncTranslation;
 import org.contract_lib.lang.contract_lib.ast.Sort;
-import org.contract_lib.lang.contract_lib.ast.Term;
 
 @AutoService(FuncProvider.class)
 public record MapFuncTranslations() implements FuncProvider {

@@ -1,20 +1,13 @@
-package org.contract_lib.adapters;
-
-import java.io.Writer;
-import java.io.IOException;
+package org.contract_lib.adapters.translations.default_translators;
 
 import java.util.Arrays;
 import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import com.github.javaparser.printer.DefaultPrettyPrinter;
 
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.NodeList;
@@ -44,9 +37,6 @@ import com.github.javaparser.ast.jml.body.JmlClassExprDeclaration;
 
 import com.github.javaparser.ast.nodeTypes.NodeWithModifiers;
 
-import com.github.javaparser.printer.configuration.DefaultPrinterConfiguration;
-import com.github.javaparser.printer.configuration.PrinterConfiguration;
-
 import org.contract_lib.contract_chameleon.contexts.ResultDirectoryContext.TranslationResult;
 import org.contract_lib.contract_chameleon.error.ChameleonMessageManager;
 
@@ -72,29 +62,24 @@ import org.contract_lib.adapters.translations.FuncProvider;
 import org.contract_lib.adapters.translations.FuncTranslator;
 import org.contract_lib.adapters.translations.KeyTranslations;
 import org.contract_lib.adapters.translations.IndexFabric;
-import org.contract_lib.adapters.translations.default_translators.DefaultContractTranslator;
-import org.contract_lib.adapters.translations.default_translators.DefaultFuncTranslator;
-import org.contract_lib.adapters.translations.default_translators.DefaultIndexFabric;
-import org.contract_lib.adapters.translations.default_translators.DefaultSortTranslator;
-import org.contract_lib.adapters.translations.default_translators.DefaultTermTranslator;
 import org.contract_lib.adapters.translations.functions.FieldAccessTranslation;
 
 /// This class only supprts one abstraction at a time
 /// It was mainly build for experimental purposes to find out,
 /// what are suitable abstractions and interfaces used in a translation.
-public class SimpleKeyProviderTranslator {
+public class DefaultKeYTranslator {
 
-  private static final String IMPLEMENTATION_SUFFIX = "Impl";
-  private static String FOOTPRINT_NAME = "fp";
-  private static String RESULT_LABEL_CONTRACT_LIB = "result";
-  private static String RESULT_LABEL_JML = "\\result";
-  private static String THIS_LABEL_CONTRACT_LIB = "this";
-  private static String THIS_LABEL_JML = "this";
+  protected static final String IMPLEMENTATION_SUFFIX = "Impl";
+  protected static final String FOOTPRINT_NAME = "fp";
+  protected static final String RESULT_LABEL_CONTRACT_LIB = "result";
+  protected static final String RESULT_LABEL_JML = "\\result";
+  protected static final String THIS_LABEL_CONTRACT_LIB = "this";
+  protected static final String THIS_LABEL_JML = "this";
 
-  private ChameleonMessageManager messageManager;
+  private final ChameleonMessageManager messageManager;
 
   //Translator for sorts
-  private final TypeTranslator sortTranslator;
+  private final TypeTranslator typeTranslator;
   //Translator for func symbols
   private final FuncTranslator funcTranslator;
   //The used KeY translator (ADT representation)
@@ -112,56 +97,73 @@ public class SimpleKeyProviderTranslator {
 
   private List<TranslationResult> results = new ArrayList<>();
 
-  private Set<DetailLevel> detailLevel = new HashSet<>();
+  private final Set<DetailLevel> detailLevel;
 
-  public SimpleKeyProviderTranslator(
+  public DefaultKeYTranslator(
       ChameleonMessageManager manager) {
-
     this.messageManager = manager;
-
-    this.sortTranslator = new DefaultSortTranslator(new HashMap<>());
-    this.funcTranslator = new DefaultFuncTranslator(new HashMap<>());
-
+    this.typeTranslator = typeTranslatorFabric();
+    this.funcTranslator = getFuncLoader();
+    this.termTranslator = termTranslatorFabric(typeTranslator, funcTranslator);
+    this.keyTranslator = getKeyTranslator(manager, typeTranslator);
+    this.contractTranslator = contractTranslatorFabric(typeTranslator, termTranslator, messageManager);
+    this.detailLevel = Set.of();
     //NOTE: This allows to explicitly introduce keywords, where they are assumed default in KeY
     //this.detailLevel.add(DetailLevel.INSTANCE_ACCESSIBLE);
     //this.detailLevel.add(DetailLevel.INSTANCE_GHOST);
     //this.detailLevel.add(DetailLevel.INSTANCE_INVARIANT);
     //this.detailLevel.add(DetailLevel.INSTANCE_FOOTPRINT);
+  }
 
-    this.keyTranslator = new KeyTranslations(
+  protected KeyTranslations getKeyTranslator(ChameleonMessageManager manager, TypeTranslator sortTranslator) {
+    return new KeyTranslations(
         manager,
         sortTranslator,
         //NOTE: This allows the change from datatype type translation to sort
         KeyTranslations.ToDatatypeTranslation::new
     //KeyTranslations.ToSortTranslation::new
     );
+  }
 
+  protected FuncTranslator getFuncLoader() {
+    FuncTranslator funcTranslator = new DefaultFuncTranslator(new HashMap<>());
+    ServiceLoader<FuncProvider> funcLoader = ServiceLoader.load(
+        FuncProvider.class,
+        ClassLoader.getSystemClassLoader());
+
+    funcLoader.forEach(f -> funcTranslator.store(f.getAll()));
+    return funcTranslator;
+  }
+
+  protected TypeTranslator typeTranslatorFabric() {
+    TypeTranslator sortTranslator = new DefaultSortTranslator(new HashMap<>());
     ServiceLoader<TypeTranslation> typeLoader = ServiceLoader.load(
         TypeTranslation.class,
         ClassLoader.getSystemClassLoader());
 
     //NOTE: Additional `AbstractionTranslations` are created when abstraction is found
     typeLoader.forEach(sortTranslator::store);
+    return sortTranslator;
+  }
 
-    ServiceLoader<FuncProvider> funcLoader = ServiceLoader.load(
-        FuncProvider.class,
-        ClassLoader.getSystemClassLoader());
+  protected TermTranslator termTranslatorFabric(TypeTranslator typeTranslator, FuncTranslator funcTranslator) {
+    return new DefaultTermTranslator(
+        typeTranslator,
+        funcTranslator);
+  }
 
-    funcLoader.forEach(f -> funcTranslator.store(f.getAll()));
-
-    this.termTranslator = new DefaultTermTranslator(
-        this.sortTranslator,
-        this.funcTranslator);
-
-    this.contractTranslator = new DefaultContractTranslator(
-        this.sortTranslator,
-        this.termTranslator,
+  protected ContractTranslator contractTranslatorFabric(TypeTranslator typeTranslator,
+      TermTranslator termTranslator,
+      ChameleonMessageManager messageManager) {
+    return new DefaultContractTranslator(
+        typeTranslator,
+        termTranslator,
         FOOTPRINT_NAME,
         RESULT_LABEL_CONTRACT_LIB,
         RESULT_LABEL_JML,
         THIS_LABEL_CONTRACT_LIB,
         THIS_LABEL_JML,
-        this.messageManager);
+        messageManager);
   }
 
   public List<TranslationResult> translateContractLibAst(
@@ -171,7 +173,7 @@ public class SimpleKeyProviderTranslator {
     results.add(keyTranslator.translate(ast));
     keyTranslator.getSorts().stream()
         .map(LogicTypeTranslation::new)
-        .forEach(sortTranslator::store);
+        .forEach(typeTranslator::store);
 
     funcTranslator.store(keyTranslator.getCons());
 
@@ -223,7 +225,7 @@ public class SimpleKeyProviderTranslator {
   }
 
   private void addGhostField(ClassOrInterfaceDeclaration dec, SelectorDec selector) {
-    TypeTranslation translation = sortTranslator.translate(selector.sort());
+    TypeTranslation translation = typeTranslator.translate(selector.sort());
 
     FieldDeclaration fieldDec = new FieldDeclaration(
         NodeList.nodeList(),
@@ -254,7 +256,7 @@ public class SimpleKeyProviderTranslator {
     translation.getHelper(
         new FieldAccessExpr(new ThisExpr(), NodeList.nodeList(), getName(selector)),
         selector.sort(),
-        sortTranslator,
+        typeTranslator,
         fab)
         .stream()
         .map(e -> addModifierIfRequired(DetailLevel.INSTANCE_INVARIANT,
@@ -274,7 +276,7 @@ public class SimpleKeyProviderTranslator {
     translation.getFootprintInvariant(
         new FieldAccessExpr(new ThisExpr(), NodeList.nodeList(), new SimpleName(selector.symbol().identifier())),
         selector.sort(),
-        sortTranslator,
+        typeTranslator,
         footprintIndexfab).ifPresent(
             footprintInv -> dec.addMember(
                 addModifierIfRequired(DetailLevel.INSTANCE_INVARIANT,
@@ -385,7 +387,7 @@ public class SimpleKeyProviderTranslator {
       return;
     }
 
-    sortTranslator.store(new AbstractionTranslation(className));
+    typeTranslator.store(new AbstractionTranslation(className));
     abstractAbstractions.put(getIdentifier(packageName, className), abstractClassDeclaration);
 
     SimpleResult resAbs = new SimpleResult(
@@ -582,31 +584,6 @@ public class SimpleKeyProviderTranslator {
             DetailLevel.INSTANCE_INVARIANT ->
           Modifier.DefaultKeyword.JML_INSTANCE;
       };
-    }
-  }
-
-  //TODO: Move to own file
-  record SimpleResult(
-      String packageName,
-      String className,
-      CompilationUnit cu) implements TranslationResult {
-    @Override
-    public Optional<String> extendSubDirectory() {
-      return Optional.ofNullable(packageName);
-    }
-
-    public String fileName() {
-      return className;
-    }
-
-    public String fileEnding() {
-      return ".java";
-    }
-
-    public void writeTo(Writer writer) throws IOException {
-      PrinterConfiguration config = new DefaultPrinterConfiguration();
-      DefaultPrettyPrinter printer = new DefaultPrettyPrinter(config);
-      writer.write(printer.print(cu));
     }
   }
 }
