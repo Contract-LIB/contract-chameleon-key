@@ -10,7 +10,6 @@ import org.contract_lib.adapters.translations.FuncTranslation;
 import org.contract_lib.adapters.translations.FuncTranslator;
 import org.contract_lib.adapters.translations.IndexFabric;
 import org.contract_lib.adapters.translations.VariableScope;
-import org.contract_lib.adapters.translations.VariableScopeManager;
 import org.contract_lib.adapters.translations.VariableTranslator;
 import org.contract_lib.adapters.translations.TermTranslator;
 import org.contract_lib.lang.contract_lib.ast.Quantor;
