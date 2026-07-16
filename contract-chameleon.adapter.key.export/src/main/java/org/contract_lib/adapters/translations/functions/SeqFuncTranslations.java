@@ -14,16 +14,12 @@ import com.github.javaparser.ast.expr.IntegerLiteralExpr;
 import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.ast.expr.NameExpr;
 import com.github.javaparser.ast.expr.SimpleName;
-import com.github.javaparser.ast.expr.TypeExpr;
-import com.github.javaparser.ast.jml.type.JmlLogicType;
-import com.github.javaparser.ast.jml.type.JmlLogicType.Primitive;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.PrimitiveType;
 
 import org.contract_lib.adapters.translations.FuncProvider;
 import org.contract_lib.adapters.translations.FuncTranslation;
 import org.contract_lib.lang.contract_lib.ast.Sort;
-import org.contract_lib.lang.contract_lib.ast.Term;
 
 @AutoService(FuncProvider.class)
 public record SeqFuncTranslations() implements FuncProvider {
@@ -98,48 +94,31 @@ public record SeqFuncTranslations() implements FuncProvider {
             List.of(JML_SEQ_TYPE, JML_GENERIC_TYPE),
             JML_INT_TYPE,
             CLIB_INT_TYPE),
-        /*
-        new FuncTranslation.MethodCall(
-            "seq.indexof",
-            "\\seq_--",
-            List.of(CLIB_SEQ_TYPE, CLIB_INT_TYPE),
-            List.of(JML_SEQ_TYPE, JML_INT_TYPE),
-            JML_SEQ_TYPE,
-            CLIB_SEQ_TYPE),
-        
-        new FuncTranslation.MethodCall(
-            "seq.indexof",
-            "\\seq_--",
-            List.of(CLIB_SEQ_TYPE, CLIB_INT_TYPE),
-            List.of(JML_SEQ_TYPE, JML_INT_TYPE),
-            JML_SEQ_TYPE,
-            CLIB_SEQ_TYPE),
-            */
 
         /*
         // - Sequence boolean query 
         new FuncTranslation.MethodCall(
-            "seq.contains",
-            "\\seq_--",
-            List.of(CLIB_SEQ_TYPE, CLIB_INT_TYPE),
-            List.of(JML_SEQ_TYPE, JML_INT_TYPE),
-            JML_SEQ_TYPE,
-            CLIB_SEQ_TYPE),
+        "seq.contains",
+        "\\seq_--",
+        List.of(CLIB_SEQ_TYPE, CLIB_INT_TYPE),
+        List.of(JML_SEQ_TYPE, JML_INT_TYPE),
+        JML_SEQ_TYPE,
+        CLIB_SEQ_TYPE),
         new FuncTranslation.MethodCall(
-            "seq.prefixof",
-            "\\seq_--",
-            List.of(CLIB_SEQ_TYPE, CLIB_INT_TYPE),
-            List.of(JML_SEQ_TYPE, JML_INT_TYPE),
-            JML_SEQ_TYPE,
-            CLIB_SEQ_TYPE),
+        "seq.prefixof",
+        "\\seq_--",
+        List.of(CLIB_SEQ_TYPE, CLIB_INT_TYPE),
+        List.of(JML_SEQ_TYPE, JML_INT_TYPE),
+        JML_SEQ_TYPE,
+        CLIB_SEQ_TYPE),
         new FuncTranslation.MethodCall(
-            "seq.suffixof",
-            "\\seq_--",
-            List.of(CLIB_SEQ_TYPE, CLIB_INT_TYPE),
-            List.of(JML_SEQ_TYPE, JML_INT_TYPE),
-            JML_SEQ_TYPE,
-            CLIB_SEQ_TYPE),
-            */
+        "seq.suffixof",
+        "\\seq_--",
+        List.of(CLIB_SEQ_TYPE, CLIB_INT_TYPE),
+        List.of(JML_SEQ_TYPE, JML_INT_TYPE),
+        JML_SEQ_TYPE,
+        CLIB_SEQ_TYPE),
+        */
 
         // - Sequence mutation function
 

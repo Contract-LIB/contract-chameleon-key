@@ -1,6 +1,6 @@
+package org.contract_lib.adapters.translations.default_translators;
 
-package org.contract_lib.adapters.translations;
-
+import org.contract_lib.adapters.translations.VariableScope;
 import org.contract_lib.lang.contract_lib.ast.Sort;
 import org.contract_lib.lang.contract_lib.ast.Symbol;
 

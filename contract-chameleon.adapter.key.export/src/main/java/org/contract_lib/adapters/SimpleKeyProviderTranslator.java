@@ -55,10 +55,8 @@ import org.contract_lib.lang.contract_lib.ast.Abstraction;
 import org.contract_lib.lang.contract_lib.ast.Constructor;
 import org.contract_lib.lang.contract_lib.ast.Contract;
 import org.contract_lib.lang.contract_lib.ast.Term;
-import org.contract_lib.lang.contract_lib.ast.Term.Identifier.IdentifierValue;
 import org.contract_lib.lang.contract_lib.tools.JavaMethodSignaturExtractor;
 import org.contract_lib.lang.contract_lib.ast.SelectorDec;
-import org.contract_lib.lang.contract_lib.ast.Symbol;
 import org.contract_lib.lang.contract_lib.ast.DatatypeDec;
 
 import org.contract_lib.lang.contract_lib.modifier.IdentifierSubstitution;

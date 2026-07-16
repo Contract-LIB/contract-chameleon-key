@@ -1,4 +1,4 @@
-package org.contract_lib.adapters.translations;
+package org.contract_lib.adapters.translations.default_translators;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -6,7 +6,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.contract_lib.adapters.translations.TypeTranslation;
+import org.contract_lib.adapters.translations.TypeTranslator;
+import org.contract_lib.adapters.translations.VariableScope;
+import org.contract_lib.adapters.translations.VariableTranslator;
 import org.contract_lib.lang.contract_lib.ast.Formal;
+import org.contract_lib.lang.contract_lib.ast.Sort;
 import org.contract_lib.lang.contract_lib.ast.SortedVar;
 import org.contract_lib.lang.contract_lib.ast.Symbol;
 
@@ -16,7 +21,7 @@ import com.github.javaparser.ast.expr.SimpleName;
 import com.github.javaparser.ast.expr.ThisExpr;
 import com.github.javaparser.ast.type.Type;
 
-public final class VariableScopeManager implements VariableTranslator {
+public class VariableScopeManager implements VariableTranslator {
 
   private static String RESULT_LABEL = "\\result";
 
@@ -29,7 +34,6 @@ public final class VariableScopeManager implements VariableTranslator {
 
   public VariableScopeManager(TypeTranslator sortTranslator) {
     this.sortTranslator = sortTranslator;
-
   }
 
   public void add(SortedVar sortedVar) {
@@ -58,8 +62,8 @@ public final class VariableScopeManager implements VariableTranslator {
           formal.sort(),
           t.getJmlType(formal.sort()),
           t.hasFootprint());
-      this.returnType = Optional.ofNullable(t.getJmlType(formal.sort()));
       map.put(el.getClibSymbol().identifier(), el);
+      this.returnType = createReturnType(t, formal.sort());
     } else if (formal.identifier().identifier().equals("this")) {
       this.ownerType = Optional.ofNullable(t.getJmlType(formal.sort()));
       VariableScopeElement el = new VariableScopeElement(
@@ -81,6 +85,10 @@ public final class VariableScopeManager implements VariableTranslator {
           t.getJmlType(formal.sort()),
           new SimpleName(formal.identifier().identifier())));
     }
+  }
+
+  public Optional<Type> createReturnType(TypeTranslation t, Sort sort) {
+    return Optional.of(t.getJmlType(sort));
   }
 
   public Optional<VariableScope> translate(Symbol symbol) {

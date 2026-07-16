@@ -25,7 +25,7 @@ public record IntFuncTranslations() implements FuncProvider {
         //TODO: Move '=' and 'distinct' to generic definion 
         /*
         new UnaryTranslation(
-            "not",
+            "-",
             UnaryExpr.Operator.LOGICAL_COMPLEMENT,
             JML_INT_TYPE, JML_INT_TYPE,
             CLIB_INT_TYPE, CLIB_INT_TYPE),
