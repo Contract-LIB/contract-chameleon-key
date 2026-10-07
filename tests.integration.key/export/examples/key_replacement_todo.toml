@@ -1,0 +1,165 @@
+[examples.TodoList]
+body = """
+
+    private String[] openT;
+    private String[] closedT;
+    private int sizeO;
+    private int sizeC;
+    private static final int MAX_SIZE = 1000;
+
+    // @ public invariant this.openTasks == (\\seq_def int i; 0; this.sizeO; this.openT[i]);
+    //@ public invariant (\\forall int j; 0 <= j && j < MAX_SIZE; this.openT[j] != null);
+    //@ public invariant (\\forall int j; 0 <= j && j < sizeO; this.openT[j] == this.openTasks[j]);
+    //@ public invariant \\subset(this.openT[*], this.fp);
+    //@ public invariant this.sizeO == this.openTasks.length;
+    //@ public invariant this.sizeO >= 0 && this.sizeO <= this.openT.length;
+    //@ public invariant this.openT.length == 1000;
+    //@ public invariant this.openT != null;
+    //@ public invariant \\typeof(this.openT) == \\type(String[]);
+
+    //@ public invariant this.closedTasks == (\\seq_def int i; 0; this.sizeC; this.closedT[i]);
+    //@ public invariant \\subset(this.closedT[*], this.fp);
+    //@ public invariant this.sizeC == this.closedTasks.length;
+    //@ public invariant this.sizeC >= 0 && this.sizeC <= this.closedT.length;
+    //@ public invariant this.closedT.length == 1000;
+    //@ public invariant this.closedT != null;
+    //@ public invariant \\typeof(this.closedT) == \\type(String[]);
+
+    //@ public invariant this.openT != this.closedT;
+    
+    //@ public invariant \\disjoint(this.openT[*], this.closedT[*]);
+    
+    /*@ normal_behavior
+      @ ensures \\result != null;
+      @ ensures \\result.length == MAX_SIZE;
+      @ ensures \\fresh(\\result);
+      @ ensures \\typeof(\\result) == \\type(String[]);
+      @ assignable \\nothing;
+      @*/
+    private /*@ helper @*/ String[] createArray() {
+        String[] temp;
+        temp = new String[MAX_SIZE];
+        /*@ loop_invariant 0 <= i && i <= MAX_SIZE;
+          @ loop_invariant temp != null;
+          @ loop_invariant temp.length == MAX_SIZE;
+          @ loop_invariant \\fresh(temp);
+          @ loop_invariant (\\forall int j; 0 <= j && j < i; temp[j] != null);
+          @ assignable temp[*];
+          @ decreases MAX_SIZE - i;
+          @*/
+        for (int i = 0; i < MAX_SIZE; i++){
+          temp[i] = "";
+        }
+        return temp;
+    }
+"""
+
+init = """
+
+      this.openT = createArray();
+      this.sizeO = 0;
+      //@ set fp = \\set_union(\\all_fields(this), this.openT[*]);
+      //@ set openTasks = \\seq_empty;
+
+      this.closedT = createArray();
+      this.sizeC = 0;
+
+      //@ set fp = \\set_union(fp, this.closedT[*]);
+      //@ set closedTasks = \\seq_empty;
+"""
+
+addTask = """
+
+      this.openT[this.sizeO] = task;
+      this.sizeO++;
+    
+      //@ set openTasks = \\seq_concat(openTasks, \\seq_singleton(task));
+"""
+
+allMarkedDone = """
+
+      return this.sizeO == 0;
+"""
+
+nextTask = """
+
+      return this.openT[0];
+
+"""
+
+finishNextTask = """
+
+      // @ assert this.openTasks[0] == this.openT[0];
+      
+      String task = this.openT[0];
+      this.closedT[this.sizeC] = task;
+      this.sizeC++;
+
+      //@ set closedTasks = \\seq_concat(closedTasks, \\seq_singleton(task));
+ 
+      // @ assert(task == this.openTasks[0]);
+
+      /*@ loop_invariant 0 <= i && i <= this.sizeO - 1;
+        @ loop_invariant this.openT != null;
+        @ loop_invariant this.closedT != null;
+        @ loop_invariant this.closedT != this.openT;
+        @ loop_invariant this.openT.length == MAX_SIZE;
+        @ loop_invariant sizeO == \\old(this.openTasks.length);
+        @ loop_invariant this.openT.length == 1000;
+        @ loop_invariant \\typeof(this.openT) == \\type(String[]);
+        @
+        @ loop_invariant (\\forall int j; 0 <= j && j < sizeO; \\old(this.openT[j]) == \\old(this.openTasks[j]));
+        @
+        @ loop_invariant (\\forall int j; 0 <= j && j < i; this.openT[j] == \\old(this.openT[j+1]));
+        @ loop_invariant (\\forall int j; 0 <= j && j < i; this.openT[j] == \\old(this.openTasks[j+1]));
+        @
+        @ loop_invariant (\\forall int j; i <= j && j < sizeO; this.openT[j] == \\old(this.openT[j]));
+        @ loop_invariant (\\forall int j; i <= j && j < sizeO; this.openT[j] == \\old(this.openTasks[j]));
+        @
+        @ assignable this.openT[*];
+        @ decreases this.sizeO - i;
+        @*/
+      for (int i = 0; i < this.sizeO - 1; i++) {
+          this.openT[i] = this.openT[i+1];
+      }
+
+      //@ set openTasks = \\seq_sub(openTasks, 1, sizeO);
+      this.sizeO--;
+"""
+
+[examples._Client]
+
+file = """
+package examples;
+
+public class _Client {
+
+  /*@ normal_behavior
+    requires true;
+    ensures true;
+    */
+  public static void main(String[] args)
+  {
+    testTodoList();
+    testWhiteboard();
+  }
+
+  /*@ normal_behavior
+    requires true;
+    ensures true;
+    */
+  public static void testTodoList()
+  {
+
+  }
+
+  /*@ normal_behavior
+    requires true;
+    ensures true;
+    */
+  public static void testWhiteboard()
+  {
+
+  }
+}
+"""
