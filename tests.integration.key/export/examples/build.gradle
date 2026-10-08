@@ -51,6 +51,32 @@ createKeYPipeline(
   client_package,
   ["examples.Stack[examples.Stack::init()].JML normal_behavior operation contract.0"]
 ).each { t -> tests << t }
+
+// - Todo Example
+
+def examples_todo = "examples-todo"
+def todo_clib = "./export/examples/todo.clib"
+def todo_replace = "./export/examples/key_replacement_todo.toml"
+
+createKeYPipeline(
+  examples_todo,
+  key_applicant,
+  todo_clib,
+  todo_replace,
+  client_package,
+  ["examples.TodoList[examples.TodoList::init()].JML normal_behavior operation contract.0"]
+  //"examples.Whiteboard[examples.Whiteboard::init()].JML normal_behavior operation contract.0"]
+).each { t -> tests << t }
+
+createKeYPipeline(
+  examples_todo,
+  key_provider,
+  todo_clib,
+  todo_replace,
+  client_package,
+  []
+).each { t -> tests << t }
+
 // Full run
 tasks.register('it-examples-key') {
     group = "Integration Tests"

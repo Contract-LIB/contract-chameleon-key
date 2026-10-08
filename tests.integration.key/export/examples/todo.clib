@@ -1,0 +1,108 @@
+; - TodoList
+
+(declare-abstractions
+  (
+    (examples.TodoList 0)
+  )
+  ((
+    (TodoList
+      (openTasks (Seq String))
+      (closedTasks (Seq String))
+    )
+  ))
+)
+
+(define-contract examples.TodoList.init (
+  (result (out TodoList))
+) ((
+    true
+    (and
+      (= (openTasks result) seq.empty)
+      (= (closedTasks result) seq.empty)
+    )
+)))
+
+(define-contract examples.TodoList.addTask (
+  (this (inout TodoList))
+  (task (in String))
+) ((
+    ;true
+    (< (seq.len (openTasks this)) 1000)
+    (and
+      (=
+        (openTasks this)
+        (seq.++
+          (old (openTasks this))
+          (seq.unit task)))
+      (=
+        (closedTasks this)
+        (old (closedTasks this)))
+    )
+)))
+
+(define-contract examples.TodoList.nextTask (
+  (this (in TodoList))
+  (result (out String))
+) ((
+    (distinct (openTasks this) seq.empty)
+    (= result (seq.nth (openTasks this) 0))
+)))
+
+(define-contract examples.TodoList.finishNextTask (
+  (this (inout TodoList))
+) ((
+    (and
+      (distinct (openTasks this) seq.empty)
+      (< (seq.len (closedTasks this)) 1000)
+    )
+    (and
+      (=
+        (openTasks this)
+        (seq.extract
+          1
+          (seq.len (old (openTasks this)))
+          (old (openTasks this))))
+      (=
+        (closedTasks this)
+        (seq.++
+          (old (closedTasks this))
+          (seq.unit (seq.nth (old (openTasks this)) 0))))
+    )
+)))
+
+(define-contract examples.TodoList.allMarkedDone (
+  (this (in TodoList))
+  (result (out Bool))
+) ((
+    true
+    (=
+      result
+      (= (openTasks this) seq.empty))
+)))
+
+; - Whiteboard
+
+;(declare-abstractions (
+;  (examples.Whiteboard 0)
+;)((
+;  (TodoList
+;    (tasks Int
+    ;(tasks (Set String))
+;))))
+
+
+;(define-contract examples.Whiteboard.init (
+;  (result (out Whiteboard))
+;) ((
+;    true
+;    (= (tasks result) 0)
+    ;(= (tasks result) set.empty)
+;)))
+
+;(define-contract examples.Whiteboard.isClear (
+;  (this (in Whiteboard))
+;  (result (out Bool))
+;) ((
+;    true
+;    (= result (= (tasks this) set.empty))
+;)))

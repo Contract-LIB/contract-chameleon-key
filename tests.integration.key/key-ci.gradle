@@ -39,7 +39,7 @@ tasks.register("help-all") {
 ext.key_applicant = "key-applicant"
 ext.key_provider = "key-provider"
 
-//  Execute VeriFast
+//  Execute KeY
 ext.runKeY = { String taskName, File path_to_files, List<String> forbid_contracts ->
 
   tasks.register(taskName, Exec) {
@@ -47,7 +47,7 @@ ext.runKeY = { String taskName, File path_to_files, List<String> forbid_contract
     description = "Call the geneated code in key."
 
     def key = project.findProperty("custom_key_exe") ?: contract_chameleon_key_exe
-    def ci_key = project.findProperty("custom_key_exe") ?: contract_chameleon_ci_key_exe
+    def ci_key = project.findProperty("custom_key_ci_exe") ?: contract_chameleon_ci_key_exe
     def key_file = new File(rootProject.rootDir, key)
     def ci_key_file = new File(rootProject.rootDir, ci_key)
     def statistic_file = "$buildDir/$taskName-statistic.json"

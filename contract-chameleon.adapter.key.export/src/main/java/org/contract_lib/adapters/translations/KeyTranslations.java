@@ -81,7 +81,7 @@ public class KeyTranslations {
   }
 
   private void defaultSorts() {
-    KeySort.Custom set = new KeySort.Custom("set");
+    KeySort.Custom set = new KeySort.Custom("MySet");
     KeySort.Custom any = new KeySort.Custom("any");
     KeySort i = KeySort.Internal.getInt();
     KeySort b = KeySort.Internal.getBoolean();
@@ -110,9 +110,9 @@ public class KeyTranslations {
 
     ast.datatypes().stream().forEach(dtTranslation::translateDatatype);
 
-    //TODO: Add datatypes to sort translator
-    //TODO: Define order, how the sorts are read
-    //TODO: Add constructors to sort translator
+    // TODO: Add datatypes to sort translator
+    // TODO: Define order, how the sorts are read
+    // TODO: Add constructors to sort translator
 
     KeyAst keyAst = new KeyAst(
         new ArrayList<>(sorts),
@@ -144,27 +144,27 @@ public class KeyTranslations {
   }
 
   private KeySort translateSelector(SelectorDec sdec) {
-    //TODO: Convert Interface to Optional
+    // TODO: Convert Interface to Optional
     return translateKeySort(sdec.sort());
   }
 
   private void translateFunctionDec(FunctionDec funcDec) {
-    //TODO: print error not supported yet
+    // TODO: print error not supported yet
     System.err.println("Translation of function with key are not supported yet.");
   }
 
   private void translateConstant(Constant c) {
-    //TODO: print error not supported yet
+    // TODO: print error not supported yet
     System.err.println("Translation constants with key are not supported yet.");
   }
 
   private void translateSortDecDef(SortDec.Def sd) {
-    //TODO: print error not supported yet
+    // TODO: print error not supported yet
     System.err.println("Translation Sorts with key are not supported yet.");
   }
 
   private void translateSortDecParameter(SortDec.Parameter sp) {
-    //TODO: print error not supported yet
+    // TODO: print error not supported yet
     System.err.println("Translation of Sort Parameters with key are not supported yet.");
   }
 
@@ -178,7 +178,8 @@ public class KeyTranslations {
     public void translateDatatype(Datatype dt) {
       String name = dt.identifier().name().identifier();
 
-      //TODO: Parameters are not represented in key, type casting has to be done through the application functions
+      // TODO: Parameters are not represented in key, type casting has to be done
+      // through the application functions
       KeySort.Custom sort = new KeySort.Custom(name);
       keyTranslations.sorts.add(sort);
       dt.dtDec().constructors().forEach((c) -> this.translateConstructor(sort, c));
