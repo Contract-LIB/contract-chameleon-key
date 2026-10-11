@@ -28,6 +28,10 @@ public class KeyPrinter {
   private static final String BLOCK_CLOSE = "}";
   private static final String BRACKET_OPEN = "(";
   private static final String BRACKET_CLOSE = ")";
+
+  private static final String PARAMETRIC_OPEN = "<[";
+  private static final String PARAMETRIC_CLOSE = "]>";
+
   private static final String VERTICAL_SEP = "|";
   private static final String COLON = ",";
   private static final String EQUAL = "=";
@@ -69,7 +73,7 @@ public class KeyPrinter {
 
   public void printDatatype(KeyDatatype dt) {
     printIndentation();
-    print(dt.datatype().<String>perform(this::name, this::name));
+    print(dt.datatype().<String>perform(this::name, this::name, this::name));
     print(SPACE);
     print(EQUAL);
     print(SPACE);
@@ -100,7 +104,7 @@ public class KeyPrinter {
   }
 
   private String getArgument(KeyArgument arg) {
-    return arg.type().perform(this::name, this::name) + SPACE + arg.name();
+    return arg.type().perform(this::name, this::name, this::name) + SPACE + arg.name();
   }
 
   public void printSorts(List<KeySort> sorts) {
@@ -112,7 +116,7 @@ public class KeyPrinter {
 
   public void printSort(KeySort sort) {
     printIndentation();
-    print(sort.<String>perform(this::name, this::name));
+    print(sort.<String>perform(this::name, this::name, this::name));
     print(SEMICOLON);
     printNewLine();
   }
@@ -125,6 +129,15 @@ public class KeyPrinter {
     return customSort.name();
   }
 
+  public String name(KeySort.Parametric parametricSort) {
+    String joinedParameters = parametricSort.parameters()
+        .stream()
+        .map((s) -> s.perform(this::name, this::name, this::name))
+        .collect(Collectors.joining(COLON + SPACE));
+
+    return String.format("%s<[%s]>", parametricSort.name(), joinedParameters);
+  }
+
   public void printFunctions(List<KeyFunction> functions) {
     printIndentation();
     print(COMMAND_FUNCTIONS);
@@ -135,7 +148,7 @@ public class KeyPrinter {
   public void printParameters(List<KeySort> parameters) {
     String joinedParameters = parameters
         .stream()
-        .map((s) -> s.perform(this::name, this::name))
+        .map((s) -> s.perform(this::name, this::name, this::name))
         .collect(Collectors.joining(COLON + SPACE));
 
     print(joinedParameters);
@@ -155,7 +168,7 @@ public class KeyPrinter {
   }
 
   public Void printDefaultFunction(KeyFunction.DefaultFunction funcDec) {
-    print(funcDec.returnType().<String>perform(this::name, this::name));
+    print(funcDec.returnType().<String>perform(this::name, this::name, this::name));
     print(SPACE);
     print(funcDec.name());
     if (!funcDec.parameter().isEmpty()) {
@@ -194,7 +207,7 @@ public class KeyPrinter {
     try {
       this.writer.write(text);
     } catch (IOException e) {
-      //TODO: Add error handling
+      // TODO: Add error handling
     }
   }
 
