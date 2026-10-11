@@ -18,7 +18,6 @@ createKeYPipeline(
   ["alias.LoosingAbstraction[alias.LoosingAbstraction::init()].JML normal_behavior operation contract.0"]
 ).each { t -> tests << t }
 
-
 createKeYPipeline(
   loosing,
   key_provider,
