@@ -1,0 +1,18 @@
+[features_custom_functions.VerifiedIntegerArray]
+
+
+[features_custom_functions._Client]
+file = """
+package examples;
+
+public class _Client {
+
+  /*@ normal_behavior
+    requires true;
+    ensures true;
+    */
+  public static void main(String[] args)
+  {
+  }
+}
+"""

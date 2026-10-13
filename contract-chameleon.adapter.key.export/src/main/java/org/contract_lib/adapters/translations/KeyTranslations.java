@@ -8,15 +8,11 @@ import java.util.Optional;
 import java.util.ArrayList;
 
 import java.util.stream.Collectors;
-import java.util.function.Function;
 
 import org.contract_lib.lang.contract_lib.ast.ContractLibAst;
 import org.contract_lib.lang.contract_lib.ast.Datatype;
 import org.contract_lib.lang.contract_lib.ast.Constructor;
 import org.contract_lib.lang.contract_lib.ast.SelectorDec;
-import org.contract_lib.lang.contract_lib.ast.FunctionDec;
-import org.contract_lib.lang.contract_lib.ast.Constant;
-import org.contract_lib.lang.contract_lib.ast.SortDec;
 import org.contract_lib.lang.contract_lib.ast.Sort;
 
 import org.contract_lib.lang.key.ast.KeyAst;
@@ -68,7 +64,7 @@ public class KeyTranslations {
   public KeyTranslations(
       ChameleonMessageManager messageManager,
       TypeTranslator translator,
-      Function<KeyTranslations, DatatypeTranslation> suppl) {
+      java.util.function.Function<KeyTranslations, DatatypeTranslation> suppl) {
     this.messageManager = messageManager;
     this.sorts = new ArrayList<>();
     this.functions = new ArrayList<>();
@@ -106,10 +102,12 @@ public class KeyTranslations {
   private List<KeyDatatype> datatypes;
   private TypeTranslator translator;
 
-  public TranslationResult translate(ContractLibAst ast) {
+  public void translate(ContractLibAst ast) {
 
     ast.datatypes().stream().forEach(dtTranslation::translateDatatype);
+  }
 
+  public TranslationResult store() {
     // TODO: Add datatypes to sort translator
     // TODO: Define order, how the sorts are read
     // TODO: Add constructors to sort translator
@@ -134,6 +132,10 @@ public class KeyTranslations {
     return sorts;
   }
 
+  public void addKeYFunction(KeyFunction function) {
+    functions.add(function);
+  }
+
   private KeySort translateKeySort(Sort s) {
 
     TypeTranslation translation = translator.translate(s);
@@ -146,26 +148,6 @@ public class KeyTranslations {
   private KeySort translateSelector(SelectorDec sdec) {
     // TODO: Convert Interface to Optional
     return translateKeySort(sdec.sort());
-  }
-
-  private void translateFunctionDec(FunctionDec funcDec) {
-    // TODO: print error not supported yet
-    System.err.println("Translation of function with key are not supported yet.");
-  }
-
-  private void translateConstant(Constant c) {
-    // TODO: print error not supported yet
-    System.err.println("Translation constants with key are not supported yet.");
-  }
-
-  private void translateSortDecDef(SortDec.Def sd) {
-    // TODO: print error not supported yet
-    System.err.println("Translation Sorts with key are not supported yet.");
-  }
-
-  private void translateSortDecParameter(SortDec.Parameter sp) {
-    // TODO: print error not supported yet
-    System.err.println("Translation of Sort Parameters with key are not supported yet.");
   }
 
   public interface DatatypeTranslation {

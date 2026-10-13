@@ -63,6 +63,9 @@ import org.contract_lib.lang.contract_lib.modifier.IdentifierSubstitution;
 
 import org.contract_lib.adapters.translations.TypeTranslation;
 import org.contract_lib.adapters.translations.TypeTranslator;
+import org.contract_lib.adapters.translations.custom_functions.CustomFunctionTranslationStrategy;
+import org.contract_lib.adapters.translations.custom_functions.CustomFunctionTranslator;
+import org.contract_lib.adapters.translations.custom_functions.KeYFunctionsStrategy;
 import org.contract_lib.adapters.translations.types.AbstractionTranslation;
 import org.contract_lib.adapters.translations.types.LogicTypeTranslation;
 import org.contract_lib.adapters.translations.TermTranslator;
@@ -93,26 +96,32 @@ public class SimpleKeyProviderTranslator {
 
   private ChameleonMessageManager messageManager;
 
-  //Translator for sorts
+  // Translator for sorts
   private final TypeTranslator sortTranslator;
-  //Translator for func symbols
+  // Translator for func symbols
   private final FuncTranslator funcTranslator;
-  //The used KeY translator (ADT representation)
+  // Translator for custom functions
+  private final CustomFunctionTranslator customFunctionTranslator;
+  // The used KeY translator (ADT representation)
   private final KeyTranslations keyTranslator;
-  //The used term translator
+  // The used term translator
   private final TermTranslator termTranslator;
-  //The used contract translator
+  // The used contract translator
   private final ContractTranslator contractTranslator;
 
-  //This map stores the abstract class definitions generated from the abstractions 
+  // This map stores the abstract class definitions generated from the
+  // abstractions
   private Map<String, ClassOrInterfaceDeclaration> abstractAbstractions = new HashMap<>();
 
-  //This map stores the class implementation blueprints generated from the abstractions 
+  // This map stores the class implementation blueprints generated from the
+  // abstractions
   private Map<String, ClassOrInterfaceDeclaration> abstractionImpementations = new HashMap<>();
 
   private List<TranslationResult> results = new ArrayList<>();
 
   private Set<DetailLevel> detailLevel = new HashSet<>();
+
+  private CustomFunctionTranslationStrategy strategy;
 
   public SimpleKeyProviderTranslator(
       ChameleonMessageManager manager) {
@@ -122,25 +131,27 @@ public class SimpleKeyProviderTranslator {
     this.sortTranslator = new DefaultSortTranslator(new HashMap<>());
     this.funcTranslator = new DefaultFuncTranslator(new HashMap<>());
 
-    //NOTE: This allows to explicitly introduce keywords, where they are assumed default in KeY
-    //this.detailLevel.add(DetailLevel.INSTANCE_ACCESSIBLE);
-    //this.detailLevel.add(DetailLevel.INSTANCE_GHOST);
-    //this.detailLevel.add(DetailLevel.INSTANCE_INVARIANT);
-    //this.detailLevel.add(DetailLevel.INSTANCE_FOOTPRINT);
+    // NOTE: This allows to explicitly introduce keywords, where they are assumed
+    // default in KeY
+    // this.detailLevel.add(DetailLevel.INSTANCE_ACCESSIBLE);
+    // this.detailLevel.add(DetailLevel.INSTANCE_GHOST);
+    // this.detailLevel.add(DetailLevel.INSTANCE_INVARIANT);
+    // this.detailLevel.add(DetailLevel.INSTANCE_FOOTPRINT);
 
     this.keyTranslator = new KeyTranslations(
         manager,
         sortTranslator,
-        //NOTE: This allows the change from datatype type translation to sort
+        // NOTE: This allows the change from datatype type translation to sort
         KeyTranslations.ToDatatypeTranslation::new
-    //KeyTranslations.ToSortTranslation::new
+    // KeyTranslations.ToSortTranslation::new
     );
 
     ServiceLoader<TypeTranslation> typeLoader = ServiceLoader.load(
         TypeTranslation.class,
         ClassLoader.getSystemClassLoader());
 
-    //NOTE: Additional `AbstractionTranslations` are created when abstraction is found
+    // NOTE: Additional `AbstractionTranslations` are created when abstraction is
+    // found
     typeLoader.forEach(sortTranslator::store);
 
     ServiceLoader<FuncProvider> funcLoader = ServiceLoader.load(
@@ -152,6 +163,14 @@ public class SimpleKeyProviderTranslator {
     this.termTranslator = new DefaultTermTranslator(
         this.sortTranslator,
         this.funcTranslator);
+
+    strategy = new KeYFunctionsStrategy(keyTranslator, sortTranslator);
+
+    customFunctionTranslator = new CustomFunctionTranslator(
+        termTranslator,
+        sortTranslator,
+        funcTranslator,
+        strategy);
 
     this.contractTranslator = new DefaultContractTranslator(
         this.sortTranslator,
@@ -168,24 +187,33 @@ public class SimpleKeyProviderTranslator {
       ContractLibAst ast,
       boolean provider) {
 
-    results.add(keyTranslator.translate(ast));
+    keyTranslator.translate(ast);
+
     keyTranslator.getSorts().stream()
         .map(LogicTypeTranslation::new)
         .forEach(sortTranslator::store);
 
     funcTranslator.store(keyTranslator.getCons());
 
-    //Creates the list of all provided abstractions
+    // Load all custom functions (declarations and definitions)
+    ast.functions()
+        .stream()
+        .forEach(customFunctionTranslator::addFunction);
+
+    // Store the custom functions according to strategy
+    strategy.store();
+
+    // Creates the list of all provided abstractions
     ast.abstractions()
         .stream()
         .forEach(a -> translateAbstraction(a, provider));
 
-    //Populates all abstractions with their contracts
+    // Populates all abstractions with their contracts
     ast.contracts()
         .stream()
         .forEach(this::translateContract);
 
-    //TODO: create example main class
+    results.add(keyTranslator.store());
 
     return results;
   }
@@ -230,7 +258,7 @@ public class SimpleKeyProviderTranslator {
         translation.getJmlType(selector.sort()),
         selector.symbol().identifier())
         .setPublic(true)
-        //.addModifier(Modifier.DefaultKeyword.JML_INSTANCE)
+        // .addModifier(Modifier.DefaultKeyword.JML_INSTANCE)
         .addModifier(Modifier.DefaultKeyword.JML_GHOST);
 
     addModifierIfRequired(DetailLevel.INSTANCE_GHOST, fieldDec);
@@ -243,12 +271,12 @@ public class SimpleKeyProviderTranslator {
 
     funcTranslator.store(List.of(new FieldAccessTranslation(
         new Term.Identifier.IdentifierValue(selector.symbol()),
-        null, //TODO: Add types
+        null, // TODO: Add types
         null,
         null,
         null)));
 
-    //Helper
+    // Helper
     IndexFabric fab = new DefaultIndexFabric();
 
     translation.getHelper(
@@ -259,16 +287,17 @@ public class SimpleKeyProviderTranslator {
         .stream()
         .map(e -> addModifierIfRequired(DetailLevel.INSTANCE_INVARIANT,
             new JmlClassExprDeclaration(
-                NodeList.nodeList(), //JML Tags
-                NodeList.nodeList(), //Modifier
+                NodeList.nodeList(), // JML Tags
+                NodeList.nodeList(), // Modifier
                 new SimpleName("invariant"), // kind //TODO: this is also ignored, but invariant at least printed.
-                null, //new SimpleName("name"), //name //TODO: this is not supported yet in printing??
+                null, // new SimpleName("name"), //name //TODO: this is not supported yet in
+                      // printing??
                 e)
                 .addModifier(Modifier.DefaultKeyword.PUBLIC)))
-        //.addModifier(Modifier.DefaultKeyword.JML_INSTANCE))
+        // .addModifier(Modifier.DefaultKeyword.JML_INSTANCE))
         .forEach((i) -> dec.addMember(i));
 
-    //Footprint invariants for ghost fields that are reference types.
+    // Footprint invariants for ghost fields that are reference types.
     IndexFabric footprintIndexfab = new DefaultIndexFabric();
 
     translation.getFootprintInvariant(
@@ -279,13 +308,15 @@ public class SimpleKeyProviderTranslator {
             footprintInv -> dec.addMember(
                 addModifierIfRequired(DetailLevel.INSTANCE_INVARIANT,
                     new JmlClassExprDeclaration(
-                        NodeList.nodeList(), //JML Tags
-                        NodeList.nodeList(), //Modifier
-                        new SimpleName("invariant"), // kind //TODO: this is also ignored, but invariant at least printed.
-                        null, //new SimpleName("name"), //name //TODO: this is not supported yet in printing??
+                        NodeList.nodeList(), // JML Tags
+                        NodeList.nodeList(), // Modifier
+                        new SimpleName("invariant"), // kind //TODO: this is also ignored, but invariant at least
+                                                     // printed.
+                        null, // new SimpleName("name"), //name //TODO: this is not supported yet in
+                              // printing??
                         footprintInv)
                         .addModifier(Modifier.DefaultKeyword.PUBLIC))));
-    //.addModifier(Modifier.DefaultKeyword.JML_INSTANCE)));
+    // .addModifier(Modifier.DefaultKeyword.JML_INSTANCE)));
   }
 
   protected void addAbstractionFootprint(ClassOrInterfaceDeclaration dec) {
@@ -295,10 +326,10 @@ public class SimpleKeyProviderTranslator {
             null,
             new SimpleName("\\locset"),
             null),
-        //new JmlLogicType(JmlLogicType.Primitive.SET), 
+        // new JmlLogicType(JmlLogicType.Primitive.SET),
         FOOTPRINT_NAME)
         .setPublic(true)
-        //.addModifier(Modifier.DefaultKeyword.JML_INSTANCE)
+        // .addModifier(Modifier.DefaultKeyword.JML_INSTANCE)
         .addModifier(Modifier.DefaultKeyword.JML_GHOST);
 
     addModifierIfRequired(DetailLevel.INSTANCE_FOOTPRINT, fieldDec);
@@ -311,10 +342,11 @@ public class SimpleKeyProviderTranslator {
 
     // All ghost fields of this class are part of the footprint footprint
     JmlClassExprDeclaration footprintInv = new JmlClassExprDeclaration(
-        NodeList.nodeList(), //JML Tags
-        NodeList.nodeList(), //Modifier
+        NodeList.nodeList(), // JML Tags
+        NodeList.nodeList(), // Modifier
         new SimpleName("invariant"), // kind //TODO: this is also ignored, but invariant at least printed.
-        null, //new SimpleName("name"), //name //TODO: this is not supported yet in printing??
+        null, // new SimpleName("name"), //name //TODO: this is not supported yet in
+              // printing??
         new MethodCallExpr(
             null, // scope
             new SimpleName("\\subset"),
@@ -358,7 +390,7 @@ public class SimpleKeyProviderTranslator {
         new NameExpr(new SimpleName("\\inv")),
         NodeList.nodeList(
             new NameExpr(new SimpleName(FOOTPRINT_NAME))),
-        null //Measured by
+        null // Measured by
     )
         .addModifier(Modifier.DefaultKeyword.PUBLIC);
 
@@ -381,7 +413,7 @@ public class SimpleKeyProviderTranslator {
         sel.stream().map(selector -> new FieldAccessExpr(new ThisExpr(), NodeList.nodeList(), getName(selector)))
             .collect(Collectors.toList()));
 
-    //TODO: Add footprints of components that are reference types, not value types.
+    // TODO: Add footprints of components that are reference types, not value types.
   }
 
   private void createAbstractClass(
@@ -451,7 +483,7 @@ public class SimpleKeyProviderTranslator {
 
   private void translateAbstraction(
       Abstraction abstraction, boolean provider) {
-    //TODO: Extract package name from abstraction or report warning
+    // TODO: Extract package name from abstraction or report warning
     String packageName = packageName(abstraction);
     String className = className(abstraction);
 
@@ -463,7 +495,7 @@ public class SimpleKeyProviderTranslator {
   }
 
   private String packageName(Abstraction abstraction) {
-    //TODO: To proper error testing
+    // TODO: To proper error testing
     String[] split = abstraction.identifier().name().identifier().split("\\.");
     String[] copy = Arrays.copyOf(split, split.length - 1);
 
@@ -471,7 +503,7 @@ public class SimpleKeyProviderTranslator {
   }
 
   private String className(Abstraction abstraction) {
-    //TODO: To proper error testing
+    // TODO: To proper error testing
     String[] split = abstraction.identifier().name().identifier().split("\\.");
     return split[split.length - 1];
   }
@@ -558,7 +590,7 @@ public class SimpleKeyProviderTranslator {
 
       annotateMethodDecl(methodDeclAbstr);
 
-      //TODO: set default value when return type != void
+      // TODO: set default value when return type != void
       Statement returnStmt = new ReturnStmt();
       returnStmt.setLineComment(methodSignaturExtractor.getDefaultMethodBody());
 
@@ -585,7 +617,8 @@ public class SimpleKeyProviderTranslator {
     return declaration;
   }
 
-  /// Which keywords should added to the specification, even if they are the default
+  /// Which keywords should added to the specification, even if they are the
+  /// default
   private enum DetailLevel {
     INSTANCE_FOOTPRINT,
     INSTANCE_GHOST,
@@ -603,7 +636,7 @@ public class SimpleKeyProviderTranslator {
     }
   }
 
-  //TODO: Move to own file
+  // TODO: Move to own file
   record SimpleResult(
       String packageName,
       String className,
