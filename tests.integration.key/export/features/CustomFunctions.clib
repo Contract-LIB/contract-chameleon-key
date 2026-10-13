@@ -1,0 +1,164 @@
+(declare-abstractions
+  ((features_custom_functions.VerifiedIntegerArray 0))
+  (
+    ((
+      VerifiedIntegerArray
+        (values (Seq Int))
+    ))
+  )
+)
+
+(define-contract features_custom_functions.VerifiedIntegerArray.init
+  (
+    (result (out VerifiedIntegerArray))
+    (size (in Int))
+  )
+  (
+  (
+    (and
+      (<= size 2000)
+      (<= 0 size)
+    )
+  (= (seq.len (values result)) size)
+  )
+  )
+)
+
+
+(define-contract features_custom_functions.VerifiedIntegerArray.get
+  (
+    (this (in VerifiedIntegerArray))
+    (index (in Int))
+    (result (out Int))
+  )
+  (
+  (
+    (and
+      (< index (seq.len (values this)))
+      (<= 0 index)
+    )
+    (= (seq.nth (values this) index) result)
+  )
+  )
+)
+
+
+(define-contract features_custom_functions.VerifiedIntegerArray.set
+  (
+    (this (inout VerifiedIntegerArray))
+    (index (in Int))
+    (value (in Int))
+  )
+  (
+  (
+    (and
+      (< index (seq.len (values this)))
+      (<= 0 index)
+    )
+    (= (seq.update (old (values this)) index value) (values this))
+  )
+  )
+)
+
+; Source: https://ki-toolbox.scc.kit.edu/s/b76268dd-00b2-4fdc-94e6-7bef9eecefbc
+; Some interesting details about permutations, equality of multisets and plain FOL
+; true <-> b is a permutation of a (non recursive)
+(define-fun seq.is-permutation
+  (
+    (a (Seq Int))
+    (b (Seq Int))
+  )
+  Bool
+  (and
+    (= (seq.len a) (seq.len b))
+    (exists ((p (Seq Int)))
+      (and
+        (= (seq.len p) (seq.len a))
+        ; p maps each index of b to a valid index of a, and b[i] = a[p[i]]
+        (forall ((i Int))
+          (=> (and (<= 0 i) (< i (seq.len b)))
+              (and (<= 0 (seq.nth p i))
+                   (< (seq.nth p i) (seq.len a))
+                   (= (seq.nth b i) (seq.nth a (seq.nth p i))))))
+        ; p is injective
+        (forall ((i Int) (j Int))
+          (=> (and (<= 0 i) (< i (seq.len p))
+                   (<= 0 j) (< j (seq.len p))
+                   (= (seq.nth p i) (seq.nth p j)))
+              (= i j)))))))
+
+
+; number of occurrences of x in s at positions i in range of s
+(define-fun-rec seq.count-from ((s (Seq Int)) (x Int) (i Int))
+  Int
+  (+
+    (ite (= (seq.nth s i) x) 1 0)
+    (count-from s x (+ i 1)))
+)
+
+; true <-> b is a permutation of a
+(define-fun is-permutation-b
+  (
+    (a (Seq Int))
+    (b (Seq Int))
+  )
+  Bool
+  (and
+    (= (seq.len a) (seq.len b))
+    (forall ((x Int))
+      (=>
+        (and (<= 0 x) (< x (seq.len a)))
+        (=
+          (seq.count-from a x 0)
+          (seq.count-from b x 0)
+        )
+      )
+    )
+  )
+)
+
+(define-fun seq.is-sorted-interval
+  (
+    (l (Seq Int))
+    (start Int)
+    (end Int)
+  )
+  Bool
+  (forall ((i Int) (j Int))
+    (=>
+      (and
+        (<= start i)
+        (< i j)
+        (< i end)
+        (< j end)
+      )
+      (=
+        (seq.nth l i)
+        (seq.nth l j)
+      )
+    )
+  )
+)
+
+(define-fun seq.is-sorted
+  (
+    (l (Seq Int))
+  )
+  Bool
+  (seq.is-sorted-interval l 0 (seq.len l))
+)
+
+(define-contract features_custom_functions.VerifiedIntegerArray.sort
+  (
+    (this (inout VerifiedIntegerArray))
+  )
+  (
+  (
+    true
+    (and
+      (seq.is-permutation (values this) (old (values this)))
+      (seq.is-sorted (values this))
+    )
+  )
+  )
+)

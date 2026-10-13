@@ -1,12 +1,29 @@
 // List to store all creatd tasks
 def tests = []
 
+def examples_todo = "features-custom-function"
+def todo_clib = "./export/features/CustomFunctions.clib"
+def todo_replace = "./export/features/key_replacement_custom_functions.toml"
+def client_package = "features_custom_functions"
 
-def mode = "OVERWRITE"
-def log = "INFO"
+createKeYPipeline(
+  examples_todo,
+  key_applicant,
+  todo_clib,
+  todo_replace,
+  client_package,
+  []
+).each { t -> tests << t }
 
-runIntegrationTest("key-applicant-adt", ["key-applicant", "./export/features/Datatypes.clib", "-m", "${mode}"])
-runIntegrationTest("key-provider-adt", ["key-provider", "./export/features/Datatypes.clib", "-m", "${mode}"])
+
+createKeYPipeline(
+  examples_todo,
+  key_provider,
+  todo_clib,
+  todo_replace,
+  client_package,
+  []
+).each { t -> tests << t }
 
 // - Full run
 tasks.register('it-features-key') {

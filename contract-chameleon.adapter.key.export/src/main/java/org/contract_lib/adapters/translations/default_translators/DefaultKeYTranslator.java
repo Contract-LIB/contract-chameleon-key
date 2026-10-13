@@ -64,6 +64,9 @@ import org.contract_lib.adapters.translations.KeyTranslations;
 import org.contract_lib.adapters.translations.IndexFabric;
 import org.contract_lib.adapters.translations.functions.FieldAccessTranslation;
 
+//NOTE: this is redundant with SimpleKeyProviderTranslator atm,
+//only one version must be kept in the future
+
 /// This class only supprts one abstraction at a time
 /// It was mainly build for experimental purposes to find out,
 /// what are suitable abstractions and interfaces used in a translation.
@@ -78,21 +81,23 @@ public class DefaultKeYTranslator {
 
   private final ChameleonMessageManager messageManager;
 
-  //Translator for sorts
+  // Translator for sorts
   private final TypeTranslator typeTranslator;
-  //Translator for func symbols
+  // Translator for func symbols
   private final FuncTranslator funcTranslator;
-  //The used KeY translator (ADT representation)
+  // The used KeY translator (ADT representation)
   private final KeyTranslations keyTranslator;
-  //The used term translator
+  // The used term translator
   private final TermTranslator termTranslator;
-  //The used contract translator
+  // The used contract translator
   private final ContractTranslator contractTranslator;
 
-  //This map stores the abstract class definitions generated from the abstractions 
+  // This map stores the abstract class definitions generated from the
+  // abstractions
   private Map<String, ClassOrInterfaceDeclaration> abstractAbstractions = new HashMap<>();
 
-  //This map stores the class implementation blueprints generated from the abstractions 
+  // This map stores the class implementation blueprints generated from the
+  // abstractions
   private Map<String, ClassOrInterfaceDeclaration> abstractionImpementations = new HashMap<>();
 
   private List<TranslationResult> results = new ArrayList<>();
@@ -108,20 +113,21 @@ public class DefaultKeYTranslator {
     this.keyTranslator = getKeyTranslator(manager, typeTranslator);
     this.contractTranslator = contractTranslatorFabric(typeTranslator, termTranslator, messageManager);
     this.detailLevel = Set.of();
-    //NOTE: This allows to explicitly introduce keywords, where they are assumed default in KeY
-    //this.detailLevel.add(DetailLevel.INSTANCE_ACCESSIBLE);
-    //this.detailLevel.add(DetailLevel.INSTANCE_GHOST);
-    //this.detailLevel.add(DetailLevel.INSTANCE_INVARIANT);
-    //this.detailLevel.add(DetailLevel.INSTANCE_FOOTPRINT);
+    // NOTE: This allows to explicitly introduce keywords, where they are assumed
+    // default in KeY
+    // this.detailLevel.add(DetailLevel.INSTANCE_ACCESSIBLE);
+    // this.detailLevel.add(DetailLevel.INSTANCE_GHOST);
+    // this.detailLevel.add(DetailLevel.INSTANCE_INVARIANT);
+    // this.detailLevel.add(DetailLevel.INSTANCE_FOOTPRINT);
   }
 
   protected KeyTranslations getKeyTranslator(ChameleonMessageManager manager, TypeTranslator sortTranslator) {
     return new KeyTranslations(
         manager,
         sortTranslator,
-        //NOTE: This allows the change from datatype type translation to sort
+        // NOTE: This allows the change from datatype type translation to sort
         KeyTranslations.ToDatatypeTranslation::new
-    //KeyTranslations.ToSortTranslation::new
+    // KeyTranslations.ToSortTranslation::new
     );
   }
 
@@ -141,7 +147,8 @@ public class DefaultKeYTranslator {
         TypeTranslation.class,
         ClassLoader.getSystemClassLoader());
 
-    //NOTE: Additional `AbstractionTranslations` are created when abstraction is found
+    // NOTE: Additional `AbstractionTranslations` are created when abstraction is
+    // found
     typeLoader.forEach(sortTranslator::store);
     return sortTranslator;
   }
@@ -170,24 +177,24 @@ public class DefaultKeYTranslator {
       ContractLibAst ast,
       boolean provider) {
 
-    results.add(keyTranslator.translate(ast));
+    keyTranslator.translate(ast);
     keyTranslator.getSorts().stream()
         .map(LogicTypeTranslation::new)
         .forEach(typeTranslator::store);
 
     funcTranslator.store(keyTranslator.getCons());
 
-    //Creates the list of all provided abstractions
+    // Creates the list of all provided abstractions
     ast.abstractions()
         .stream()
         .forEach(a -> translateAbstraction(a, provider));
 
-    //Populates all abstractions with their contracts
+    // Populates all abstractions with their contracts
     ast.contracts()
         .stream()
         .forEach(this::translateContract);
 
-    //TODO: create example main class
+    results.add(keyTranslator.store());
 
     return results;
   }
@@ -232,7 +239,7 @@ public class DefaultKeYTranslator {
         translation.getJmlType(selector.sort()),
         selector.symbol().identifier())
         .setPublic(true)
-        //.addModifier(Modifier.DefaultKeyword.JML_INSTANCE)
+        // .addModifier(Modifier.DefaultKeyword.JML_INSTANCE)
         .addModifier(Modifier.DefaultKeyword.JML_GHOST);
 
     addModifierIfRequired(DetailLevel.INSTANCE_GHOST, fieldDec);
@@ -245,12 +252,12 @@ public class DefaultKeYTranslator {
 
     funcTranslator.store(List.of(new FieldAccessTranslation(
         new Term.Identifier.IdentifierValue(selector.symbol()),
-        null, //TODO: Add types
+        null, // TODO: Add types
         null,
         null,
         null)));
 
-    //Helper
+    // Helper
     IndexFabric fab = new DefaultIndexFabric();
 
     translation.getHelper(
@@ -261,16 +268,17 @@ public class DefaultKeYTranslator {
         .stream()
         .map(e -> addModifierIfRequired(DetailLevel.INSTANCE_INVARIANT,
             new JmlClassExprDeclaration(
-                NodeList.nodeList(), //JML Tags
-                NodeList.nodeList(), //Modifier
+                NodeList.nodeList(), // JML Tags
+                NodeList.nodeList(), // Modifier
                 new SimpleName("invariant"), // kind //TODO: this is also ignored, but invariant at least printed.
-                null, //new SimpleName("name"), //name //TODO: this is not supported yet in printing??
+                null, // new SimpleName("name"), //name //TODO: this is not supported yet in
+                      // printing??
                 e)
                 .addModifier(Modifier.DefaultKeyword.PUBLIC)))
-        //.addModifier(Modifier.DefaultKeyword.JML_INSTANCE))
+        // .addModifier(Modifier.DefaultKeyword.JML_INSTANCE))
         .forEach((i) -> dec.addMember(i));
 
-    //Footprint invariants for ghost fields that are reference types.
+    // Footprint invariants for ghost fields that are reference types.
     IndexFabric footprintIndexfab = new DefaultIndexFabric();
 
     translation.getFootprintInvariant(
@@ -281,13 +289,15 @@ public class DefaultKeYTranslator {
             footprintInv -> dec.addMember(
                 addModifierIfRequired(DetailLevel.INSTANCE_INVARIANT,
                     new JmlClassExprDeclaration(
-                        NodeList.nodeList(), //JML Tags
-                        NodeList.nodeList(), //Modifier
-                        new SimpleName("invariant"), // kind //TODO: this is also ignored, but invariant at least printed.
-                        null, //new SimpleName("name"), //name //TODO: this is not supported yet in printing??
+                        NodeList.nodeList(), // JML Tags
+                        NodeList.nodeList(), // Modifier
+                        new SimpleName("invariant"), // kind //TODO: this is also ignored, but invariant at least
+                                                     // printed.
+                        null, // new SimpleName("name"), //name //TODO: this is not supported yet in
+                              // printing??
                         footprintInv)
                         .addModifier(Modifier.DefaultKeyword.PUBLIC))));
-    //.addModifier(Modifier.DefaultKeyword.JML_INSTANCE)));
+    // .addModifier(Modifier.DefaultKeyword.JML_INSTANCE)));
   }
 
   protected void addAbstractionFootprint(ClassOrInterfaceDeclaration dec) {
@@ -297,10 +307,10 @@ public class DefaultKeYTranslator {
             null,
             new SimpleName("\\locset"),
             null),
-        //new JmlLogicType(JmlLogicType.Primitive.SET), 
+        // new JmlLogicType(JmlLogicType.Primitive.SET),
         FOOTPRINT_NAME)
         .setPublic(true)
-        //.addModifier(Modifier.DefaultKeyword.JML_INSTANCE)
+        // .addModifier(Modifier.DefaultKeyword.JML_INSTANCE)
         .addModifier(Modifier.DefaultKeyword.JML_GHOST);
 
     addModifierIfRequired(DetailLevel.INSTANCE_FOOTPRINT, fieldDec);
@@ -313,10 +323,11 @@ public class DefaultKeYTranslator {
 
     // All ghost fields of this class are part of the footprint footprint
     JmlClassExprDeclaration footprintInv = new JmlClassExprDeclaration(
-        NodeList.nodeList(), //JML Tags
-        NodeList.nodeList(), //Modifier
+        NodeList.nodeList(), // JML Tags
+        NodeList.nodeList(), // Modifier
         new SimpleName("invariant"), // kind //TODO: this is also ignored, but invariant at least printed.
-        null, //new SimpleName("name"), //name //TODO: this is not supported yet in printing??
+        null, // new SimpleName("name"), //name //TODO: this is not supported yet in
+              // printing??
         new MethodCallExpr(
             null, // scope
             new SimpleName("\\subset"),
@@ -342,7 +353,7 @@ public class DefaultKeYTranslator {
         new NameExpr(new SimpleName("\\inv")),
         NodeList.nodeList(
             new NameExpr(new SimpleName(FOOTPRINT_NAME))),
-        null //Measured by
+        null // Measured by
     )
         .addModifier(Modifier.DefaultKeyword.PUBLIC);
 
@@ -365,7 +376,7 @@ public class DefaultKeYTranslator {
         sel.stream().map(selector -> new FieldAccessExpr(new ThisExpr(), NodeList.nodeList(), getName(selector)))
             .collect(Collectors.toList()));
 
-    //TODO: Add footprints of components that are reference types, not value types.
+    // TODO: Add footprints of components that are reference types, not value types.
   }
 
   private void createAbstractClass(
@@ -435,7 +446,7 @@ public class DefaultKeYTranslator {
 
   private void translateAbstraction(
       Abstraction abstraction, boolean provider) {
-    //TODO: Extract package name from abstraction or report warning
+    // TODO: Extract package name from abstraction or report warning
     String packageName = packageName(abstraction);
     String className = className(abstraction);
 
@@ -447,7 +458,7 @@ public class DefaultKeYTranslator {
   }
 
   private String packageName(Abstraction abstraction) {
-    //TODO: To proper error testing
+    // TODO: To proper error testing
     String[] split = abstraction.identifier().name().identifier().split("\\.");
     String[] copy = Arrays.copyOf(split, split.length - 1);
 
@@ -455,7 +466,7 @@ public class DefaultKeYTranslator {
   }
 
   private String className(Abstraction abstraction) {
-    //TODO: To proper error testing
+    // TODO: To proper error testing
     String[] split = abstraction.identifier().name().identifier().split("\\.");
     return split[split.length - 1];
   }
@@ -542,7 +553,7 @@ public class DefaultKeYTranslator {
 
       annotateMethodDecl(methodDeclAbstr);
 
-      //TODO: set default value when return type != void
+      // TODO: set default value when return type != void
       Statement returnStmt = new ReturnStmt();
       returnStmt.setLineComment(methodSignaturExtractor.getDefaultMethodBody());
 
@@ -569,7 +580,8 @@ public class DefaultKeYTranslator {
     return declaration;
   }
 
-  /// Which keywords should added to the specification, even if they are the default
+  /// Which keywords should added to the specification, even if they are the
+  /// default
   private enum DetailLevel {
     INSTANCE_FOOTPRINT,
     INSTANCE_GHOST,
